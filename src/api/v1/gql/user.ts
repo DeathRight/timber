@@ -1,11 +1,14 @@
-import { idArg, nonNull, objectType, queryField } from 'nexus';
+import { arg, nonNull, objectType, queryField, stringArg } from 'nexus';
 
-import { getUser } from '../../util/util';
+import { AuthInfo, ProvidersE } from '.';
+import { getUser } from '../../../util/util';
 
-export interface IUser {
+export interface User {
   id: string;
   displayName: string;
   createdAt: string;
+  authInfo: AuthInfo;
+  authProvider: ProvidersE;
   avatar?: string;
   lastSeen?: number | Date;
   servers?: string[];
@@ -19,11 +22,13 @@ export const User = objectType({
   definition(t) {
     t.implements("Node");
     t.nonNull.string("displayName", { description: "Global display name" });
-    t.nonNull.date("createdAt", {
+    t.nonNull.timestamp("createdAt", {
       description: "Time in milliseconds since epoch the user was created at",
     });
+    t.nonNull.authinfo("authInfo");
+    t.nonNull.providerenum("authProvider");
     t.string("avatar", { description: "URL for user's avatar" });
-    t.date("lastSeen", {
+    t.timestamp("lastSeen", {
       description:
         "Time in milliseconds since epoch the user was last logged in",
     });
@@ -44,7 +49,9 @@ export const User = objectType({
 
 export const userByIdQuery = queryField("userById", {
   type: "User",
-  args: { id: nonNull(idArg({ description: "UUID of the user" })) },
+  args: {
+    id: nonNull(arg({ type: "BigInt", description: "UUID of the user" })),
+  },
   async resolve(_, args, ctx) {
     return await getUser("id", args.id, ctx.pg);
   },
@@ -53,7 +60,9 @@ export const userByIdQuery = queryField("userById", {
 export const userByNameQuery = queryField("userByName", {
   type: "User",
   args: {
-    displayName: nonNull(idArg({ description: "Display Name of the user" })),
+    displayName: nonNull(
+      stringArg({ description: "Display Name of the user" })
+    ),
   },
   async resolve(_, args, ctx) {
     return await getUser("displayName", args.displayName, ctx.pg);

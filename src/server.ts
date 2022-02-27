@@ -3,8 +3,7 @@ import path from 'path';
 import { types } from 'pg';
 
 import startServer from './api/startServer';
-import { epoch } from './util/constants';
-import { root } from './util/util';
+import { epoch, root } from './util/constants';
 
 // https://github.com/brianc/node-pg-types/issues/78
 types.setTypeParser(20, BigInt);

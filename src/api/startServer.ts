@@ -7,7 +7,7 @@ import { GraphQLSchema } from 'graphql';
 import mercurius from 'mercurius';
 
 import { Context } from '../util/context';
-import schema from './gql/schema';
+import schemav1 from './v1/gql/schema';
 
 export default function () {
   const fastify = Fastify({
@@ -31,9 +31,12 @@ export default function () {
 
   fastify.register(websocketPlugin);
 
+  fastify.decorateRequest("user", null);
+
   fastify.register(mercurius, {
-    schema: schema as unknown as GraphQLSchema,
+    schema: schemav1 as unknown as GraphQLSchema,
     graphiql: true,
+    prefix: "/api/v1/",
     context: (req: FastifyRequest, reply: FastifyReply): Context => {
       return {
         req,
@@ -41,6 +44,7 @@ export default function () {
         pg: fastify.pg,
         mongo: fastify.mongo,
         redis: fastify.redis,
+        user: req.user,
       };
     },
   });

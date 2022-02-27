@@ -4,30 +4,64 @@
  */
 
 
-import type { Context } from "./../util/context"
+import type { Context } from "./../../../../util/context"
+import type { AuthInfo } from "./../../gql"
+import type { ProvidersE } from "./../provider"
 import type { core } from "nexus"
 declare global {
   interface NexusGenCustomInputMethods<TypeName extends string> {
     /**
-     * Date type, serialized as milliseconds since epoch
+     * A date-time string at UTC, such as 2007-12-03T10:15:30Z, compliant with the `date-time` format outlined in section 5.6 of the RFC 3339 profile of the ISO 8601 standard for representation of dates and times using the Gregorian calendar.
      */
-    date<FieldName extends string>(fieldName: FieldName, opts?: core.CommonInputFieldConfig<TypeName, FieldName>): void // "Date";
+    date<FieldName extends string>(fieldName: FieldName, opts?: core.CommonInputFieldConfig<TypeName, FieldName>): void // "DateTime";
     /**
-     * BigInt type
+     * The `BigInt` scalar type represents non-fractional signed whole numeric values.
      */
     bigint<FieldName extends string>(fieldName: FieldName, opts?: core.CommonInputFieldConfig<TypeName, FieldName>): void // "BigInt";
+    /**
+     * The javascript `Date` as integer. Type represents date and time as number of milliseconds from start of UNIX epoch.
+     */
+    timestamp<FieldName extends string>(fieldName: FieldName, opts?: core.CommonInputFieldConfig<TypeName, FieldName>): void // "Timestamp";
+    /**
+     * A field whose value conforms to the standard internet email address format as specified in RFC822: https://www.w3.org/Protocols/rfc822/.
+     */
+    email<FieldName extends string>(fieldName: FieldName, opts?: core.CommonInputFieldConfig<TypeName, FieldName>): void // "EmailAddress";
+    /**
+     * Sign-in provider type
+     */
+    providerenum<FieldName extends string>(fieldName: FieldName, opts?: core.CommonInputFieldConfig<TypeName, FieldName>): void // "Provider";
+    /**
+     * AuthInfo JSON object, with linked 3rd party provider IDs and/or user email under 'ids'
+     */
+    authinfo<FieldName extends string>(fieldName: FieldName, opts?: core.CommonInputFieldConfig<TypeName, FieldName>): void // "AuthInfo";
   }
 }
 declare global {
   interface NexusGenCustomOutputMethods<TypeName extends string> {
     /**
-     * Date type, serialized as milliseconds since epoch
+     * A date-time string at UTC, such as 2007-12-03T10:15:30Z, compliant with the `date-time` format outlined in section 5.6 of the RFC 3339 profile of the ISO 8601 standard for representation of dates and times using the Gregorian calendar.
      */
-    date<FieldName extends string>(fieldName: FieldName, ...opts: core.ScalarOutSpread<TypeName, FieldName>): void // "Date";
+    date<FieldName extends string>(fieldName: FieldName, ...opts: core.ScalarOutSpread<TypeName, FieldName>): void // "DateTime";
     /**
-     * BigInt type
+     * The `BigInt` scalar type represents non-fractional signed whole numeric values.
      */
     bigint<FieldName extends string>(fieldName: FieldName, ...opts: core.ScalarOutSpread<TypeName, FieldName>): void // "BigInt";
+    /**
+     * The javascript `Date` as integer. Type represents date and time as number of milliseconds from start of UNIX epoch.
+     */
+    timestamp<FieldName extends string>(fieldName: FieldName, ...opts: core.ScalarOutSpread<TypeName, FieldName>): void // "Timestamp";
+    /**
+     * A field whose value conforms to the standard internet email address format as specified in RFC822: https://www.w3.org/Protocols/rfc822/.
+     */
+    email<FieldName extends string>(fieldName: FieldName, ...opts: core.ScalarOutSpread<TypeName, FieldName>): void // "EmailAddress";
+    /**
+     * Sign-in provider type
+     */
+    providerenum<FieldName extends string>(fieldName: FieldName, ...opts: core.ScalarOutSpread<TypeName, FieldName>): void // "Provider";
+    /**
+     * AuthInfo JSON object, with linked 3rd party provider IDs and/or user email under 'ids'
+     */
+    authinfo<FieldName extends string>(fieldName: FieldName, ...opts: core.ScalarOutSpread<TypeName, FieldName>): void // "AuthInfo";
   }
 }
 
@@ -40,6 +74,7 @@ export interface NexusGenInputs {
 }
 
 export interface NexusGenEnums {
+  Provider: ProvidersE
 }
 
 export interface NexusGenScalars {
@@ -48,21 +83,26 @@ export interface NexusGenScalars {
   Float: number
   Boolean: boolean
   ID: string
-  BigInt: any
-  Date: any
+  AuthInfo: AuthInfo
+  BigInt: BigInt
+  DateTime: Date
+  EmailAddress: string
+  Timestamp: number
 }
 
 export interface NexusGenObjects {
   Query: {};
   User: { // root type
+    authInfo: NexusGenScalars['AuthInfo']; // AuthInfo!
+    authProvider: NexusGenEnums['Provider']; // Provider!
     avatar?: string | null; // String
-    createdAt: NexusGenScalars['Date']; // Date!
+    createdAt: NexusGenScalars['Timestamp']; // Timestamp!
     disabled?: boolean | null; // Boolean
     displayName: string; // String!
     friends?: Array<NexusGenScalars['BigInt'] | null> | null; // [BigInt]
     groupchats?: Array<NexusGenScalars['BigInt'] | null> | null; // [BigInt]
     id: NexusGenScalars['BigInt']; // BigInt!
-    lastSeen?: NexusGenScalars['Date'] | null; // Date
+    lastSeen?: NexusGenScalars['Timestamp'] | null; // Timestamp
     servers?: Array<NexusGenScalars['BigInt'] | null> | null; // [BigInt]
   }
 }
@@ -76,7 +116,7 @@ export interface NexusGenUnions {
 
 export type NexusGenRootTypes = NexusGenInterfaces & NexusGenObjects
 
-export type NexusGenAllTypes = NexusGenRootTypes & NexusGenScalars
+export type NexusGenAllTypes = NexusGenRootTypes & NexusGenScalars & NexusGenEnums
 
 export interface NexusGenFieldTypes {
   Query: { // field return type
@@ -84,14 +124,16 @@ export interface NexusGenFieldTypes {
     userByName: NexusGenRootTypes['User'] | null; // User
   }
   User: { // field return type
+    authInfo: NexusGenScalars['AuthInfo']; // AuthInfo!
+    authProvider: NexusGenEnums['Provider']; // Provider!
     avatar: string | null; // String
-    createdAt: NexusGenScalars['Date']; // Date!
+    createdAt: NexusGenScalars['Timestamp']; // Timestamp!
     disabled: boolean | null; // Boolean
     displayName: string; // String!
     friends: Array<NexusGenScalars['BigInt'] | null> | null; // [BigInt]
     groupchats: Array<NexusGenScalars['BigInt'] | null> | null; // [BigInt]
     id: NexusGenScalars['BigInt']; // BigInt!
-    lastSeen: NexusGenScalars['Date'] | null; // Date
+    lastSeen: NexusGenScalars['Timestamp'] | null; // Timestamp
     servers: Array<NexusGenScalars['BigInt'] | null> | null; // [BigInt]
   }
   Node: { // field return type
@@ -105,14 +147,16 @@ export interface NexusGenFieldTypeNames {
     userByName: 'User'
   }
   User: { // field return type name
+    authInfo: 'AuthInfo'
+    authProvider: 'Provider'
     avatar: 'String'
-    createdAt: 'Date'
+    createdAt: 'Timestamp'
     disabled: 'Boolean'
     displayName: 'String'
     friends: 'BigInt'
     groupchats: 'BigInt'
     id: 'BigInt'
-    lastSeen: 'Date'
+    lastSeen: 'Timestamp'
     servers: 'BigInt'
   }
   Node: { // field return type name
@@ -123,10 +167,10 @@ export interface NexusGenFieldTypeNames {
 export interface NexusGenArgTypes {
   Query: {
     userById: { // args
-      id: string; // ID!
+      id: NexusGenScalars['BigInt']; // BigInt!
     }
     userByName: { // args
-      displayName: string; // ID!
+      displayName: string; // String!
     }
   }
 }
@@ -143,7 +187,7 @@ export type NexusGenObjectNames = keyof NexusGenObjects;
 
 export type NexusGenInputNames = never;
 
-export type NexusGenEnumNames = never;
+export type NexusGenEnumNames = keyof NexusGenEnums;
 
 export type NexusGenInterfaceNames = keyof NexusGenInterfaces;
 

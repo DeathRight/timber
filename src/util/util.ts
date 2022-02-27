@@ -1,12 +1,18 @@
 import { FastifyReply, FastifyRequest } from 'fastify';
 import { PostgresDb } from 'fastify-postgres';
 import { auth } from 'firebase-admin';
-import path from 'path';
 
-import { IUser } from '../api/gql';
-import { CursorConfig } from './interfaces';
+import { CursorConfig } from '../api/v1/gql/src/interfaces';
 
-export const root = path.resolve("./src");
+export const StringIsNumber = (value: any) => isNaN(Number(value)) === false;
+
+export function EnumToObject(e: any) {
+  let ret: Record<string, number> = {};
+  Object.keys(e)
+    .filter((v) => !StringIsNumber(v))
+    .map((key) => (ret[key] = e[key]));
+  return ret;
+}
 
 export const getAuthToken = (req: FastifyRequest) => {
   const authHeader = req.headers.authorization;
@@ -36,10 +42,10 @@ export const verifyToken = async (
   return null;
 };
 
-export const pgGetOne = async (
+export const pgGetOne = async <T = any>(
   table: string,
   column: string,
-  value: string,
+  value: string | BigInt,
   pg: PostgresDb & Record<string, PostgresDb>
 ) => {
   const p = await pg.connect();
@@ -49,9 +55,8 @@ export const pgGetOne = async (
     value,
   ]);
   p.release();
-  if (q.rowCount <= 0)
-    throw new Error(`Could not find ${table} with ${column} of "${value}"`);
-  return q.rows[0];
+  if (q.rowCount <= 0) return null; // throw new Error(`Could not find ${table} with ${column} of "${value}"`);
+  return q.rows[0] as T;
 };
 
 export const pgGetPage = async (
@@ -68,8 +73,8 @@ export const pgGetPage = async (
 
 export const getUser = async (
   column: string,
-  value: string,
+  value: string | BigInt,
   pg: PostgresDb & Record<string, PostgresDb>
 ) => {
-  return pgGetOne("users", column, value, pg) as unknown as IUser;
+  return pgGetOne("users", column, value, pg);
 };
