@@ -1,7 +1,7 @@
 import { arg, nonNull, objectType, queryField, stringArg } from 'nexus';
 
 import { AuthInfo, ProvidersE } from '.';
-import { getUser } from '../../../util/util';
+import { getUser } from './src/db/user';
 
 export interface User {
   id: string;
