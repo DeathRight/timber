@@ -11,6 +11,7 @@ build
 # misc
 .DS_Store
 
+.env
 priv.env
 .env.local
 serviceAccountKey.json
