@@ -3,7 +3,7 @@ import { FastifyMongoNestedObject, FastifyMongoObject } from 'fastify-mongodb';
 import { PostgresDb } from 'fastify-postgres';
 import { FastifyRedis } from 'fastify-redis';
 
-import { User } from '../api/v1/gql';
+import { User } from '../../prisma/generated/nexus-prisma';
 
 export interface Context {
   req: FastifyRequest;
@@ -11,5 +11,6 @@ export interface Context {
   pg: PostgresDb & Record<string, PostgresDb>;
   mongo: FastifyMongoObject & FastifyMongoNestedObject;
   redis: FastifyRedis;
+  //prisma: PrismaClient;
   user?: User | null;
 }

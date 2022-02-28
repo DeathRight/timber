@@ -60,6 +60,7 @@
     "mercurius": "^9.3.3",
     "mongodb": "^4.4.0",
     "nexus": "^1.2.0",
+    "nexus-prisma": "^0.35.0",
     "pg": "^8.7.3",
     "simpleflakes": "^2.2.2"
   },

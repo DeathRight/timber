@@ -1,3 +1,4 @@
+//import { PrismaClient } from '@generated/prisma-client-js';
 import Fastify, { FastifyReply, FastifyRequest } from 'fastify';
 import fastifyMongodb from 'fastify-mongodb';
 import fastifyPostgres from 'fastify-postgres';
@@ -13,6 +14,7 @@ export default function () {
   const fastify = Fastify({
     logger: true,
   });
+  //const prisma = new PrismaClient();
   /* ----------------------------- Fastify Plugins ---------------------------- */
   fastify.register(fastifyPostgres, {
     connectionString: process.env.POSTGRES_CONNECTION_STRING,
@@ -44,6 +46,7 @@ export default function () {
         pg: fastify.pg,
         mongo: fastify.mongo,
         redis: fastify.redis,
+        //prisma: prisma as PrismaClient,
         user: req.user,
       };
     },

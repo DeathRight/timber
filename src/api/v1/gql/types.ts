@@ -1,12 +1,12 @@
-import { BigIntResolver, DateTimeResolver, EmailAddressResolver, TimestampResolver } from 'graphql-scalars';
+import { EmailAddressResolver, TimestampResolver } from 'graphql-scalars';
 import { asNexusMethod, enumType } from 'nexus';
 import path from 'path';
 
 import { ProvidersE } from './provider';
 
-export const DateScalar = asNexusMethod(DateTimeResolver, "date", "Date");
+//export const DateScalar = asNexusMethod(DateTimeResolver, "date", "Date");
 
-export const BigIntScalar = asNexusMethod(BigIntResolver, "bigint", "BigInt");
+//export const BigIntScalar = asNexusMethod(BigIntResolver, "bigint", "BigInt");
 
 export const TimestampScalar = asNexusMethod(
   TimestampResolver,

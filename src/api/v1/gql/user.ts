@@ -1,49 +1,13 @@
-import { arg, nonNull, objectType, queryField, stringArg } from 'nexus';
-
-import { AuthInfo, ProvidersE } from '.';
-import { getUser } from './src/db/user';
-
-export interface User {
-  id: string;
-  displayName: string;
-  createdAt: string;
-  authInfo: AuthInfo;
-  authProvider: ProvidersE;
-  avatar?: string;
-  lastSeen?: number | Date;
-  servers?: string[];
-  friends?: string[];
-  groupchats?: string[];
-  disabled?: boolean;
-}
-
-export const User = objectType({
-  name: "User",
+/*const u = nexusPrisma.User;
+export const UserObject = objectType({
+  name: u.$name,
+  description: u.$description,
   definition(t) {
-    t.implements("Node");
-    t.nonNull.string("displayName", { description: "Global display name" });
-    t.nonNull.timestamp("createdAt", {
-      description: "Time in milliseconds since epoch the user was created at",
-    });
-    t.nonNull.authinfo("authInfo");
-    t.nonNull.providerenum("authProvider");
-    t.string("avatar", { description: "URL for user's avatar" });
-    t.timestamp("lastSeen", {
-      description:
-        "Time in milliseconds since epoch the user was last logged in",
-    });
-    t.list.bigint("servers", {
-      description: "Array of server IDs the user is a member of",
-    });
-    t.list.bigint("friends", {
-      description: "Array of user IDs the user is friends with",
-    });
-    t.list.bigint("groupchats", {
-      description: "Array of room IDs for group chats the user is a member of",
-    });
-    t.boolean("disabled", {
-      description: "Whether or not the user's account is disabled",
-    });
+    t.field(u.id);
+    t.field(u.displayName);
+    t.field(u.avatar);
+    t.field(u.createdAt);
+    t.field(u.lastSeen);
   },
 });
 

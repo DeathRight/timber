@@ -1,13 +1,27 @@
 {
   "compilerOptions": {
     "sourceMap": true,
-    "outDir": "dist",
-    "rootDir": "src",
     "strict": true,
-    "lib": ["ESNext"],
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "moduleResolution": "node",
+    "lib": ["ES2021"],
+    "module": "commonjs",
+    "target": "ES2021",
+    "baseUrl": ".",
+    "outDir": "dist",
+    "rootDir": "src",
+    "paths": {
+      "@generated/*": ["prisma/generated/*"],
+      "@util/*": ["src/util/*"]
+    }
   },
-  "include": ["src/**/*", "src/**/**/*"]
+  "include": [
+    "src/server",
+    "src/*",
+    "src/**/*",
+    "src/**/**/*",
+    "prisma/generated/**/*"
+  ]
 }
