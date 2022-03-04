@@ -5,19 +5,11 @@
 
 
 import type { Context } from "./../../../../util/context"
-import type { AuthInfo } from "./../../gql"
-import type { ProvidersE } from "./../provider"
+import type { AuthInfo } from "./../nexus"
+import type { ProvidersE } from "./../nexus/provider"
 import type { core } from "nexus"
 declare global {
   interface NexusGenCustomInputMethods<TypeName extends string> {
-    /**
-     * A date-time string at UTC, such as 2007-12-03T10:15:30Z, compliant with the `date-time` format outlined in section 5.6 of the RFC 3339 profile of the ISO 8601 standard for representation of dates and times using the Gregorian calendar.
-     */
-    date<FieldName extends string>(fieldName: FieldName, opts?: core.CommonInputFieldConfig<TypeName, FieldName>): void // "DateTime";
-    /**
-     * The `BigInt` scalar type represents non-fractional signed whole numeric values.
-     */
-    bigint<FieldName extends string>(fieldName: FieldName, opts?: core.CommonInputFieldConfig<TypeName, FieldName>): void // "BigInt";
     /**
      * The javascript `Date` as integer. Type represents date and time as number of milliseconds from start of UNIX epoch.
      */
@@ -34,18 +26,31 @@ declare global {
      * AuthInfo JSON object, with linked 3rd party provider IDs and/or user email under 'ids'
      */
     authinfo<FieldName extends string>(fieldName: FieldName, opts?: core.CommonInputFieldConfig<TypeName, FieldName>): void // "AuthInfo";
+    /**
+     * The `BigInt` scalar type represents non-fractional signed whole numeric values.
+     * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/BigInt
+     */
+    bigInt<FieldName extends string>(fieldName: FieldName, opts?: core.CommonInputFieldConfig<TypeName, FieldName>): void // "BigInt";
+    /**
+     * The `Byte` scalar type represents byte value as a Buffer
+     */
+    bytes<FieldName extends string>(fieldName: FieldName, opts?: core.CommonInputFieldConfig<TypeName, FieldName>): void // "Bytes";
+    /**
+     * A date-time string at UTC, such as 2007-12-03T10:15:30Z, compliant with the `date-time` format outlined in section 5.6 of the RFC 3339 profile of the ISO 8601 standard for representation of dates and times using the Gregorian calendar.
+     */
+    dateTime<FieldName extends string>(fieldName: FieldName, opts?: core.CommonInputFieldConfig<TypeName, FieldName>): void // "DateTime";
+    /**
+     * An arbitrary-precision Decimal type
+     */
+    decimal<FieldName extends string>(fieldName: FieldName, opts?: core.CommonInputFieldConfig<TypeName, FieldName>): void // "Decimal";
+    /**
+     * The `JSONObject` scalar type represents JSON objects as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf).
+     */
+    json<FieldName extends string>(fieldName: FieldName, opts?: core.CommonInputFieldConfig<TypeName, FieldName>): void // "Json";
   }
 }
 declare global {
   interface NexusGenCustomOutputMethods<TypeName extends string> {
-    /**
-     * A date-time string at UTC, such as 2007-12-03T10:15:30Z, compliant with the `date-time` format outlined in section 5.6 of the RFC 3339 profile of the ISO 8601 standard for representation of dates and times using the Gregorian calendar.
-     */
-    date<FieldName extends string>(fieldName: FieldName, ...opts: core.ScalarOutSpread<TypeName, FieldName>): void // "DateTime";
-    /**
-     * The `BigInt` scalar type represents non-fractional signed whole numeric values.
-     */
-    bigint<FieldName extends string>(fieldName: FieldName, ...opts: core.ScalarOutSpread<TypeName, FieldName>): void // "BigInt";
     /**
      * The javascript `Date` as integer. Type represents date and time as number of milliseconds from start of UNIX epoch.
      */
@@ -62,6 +67,27 @@ declare global {
      * AuthInfo JSON object, with linked 3rd party provider IDs and/or user email under 'ids'
      */
     authinfo<FieldName extends string>(fieldName: FieldName, ...opts: core.ScalarOutSpread<TypeName, FieldName>): void // "AuthInfo";
+    /**
+     * The `BigInt` scalar type represents non-fractional signed whole numeric values.
+     * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/BigInt
+     */
+    bigInt<FieldName extends string>(fieldName: FieldName, ...opts: core.ScalarOutSpread<TypeName, FieldName>): void // "BigInt";
+    /**
+     * The `Byte` scalar type represents byte value as a Buffer
+     */
+    bytes<FieldName extends string>(fieldName: FieldName, ...opts: core.ScalarOutSpread<TypeName, FieldName>): void // "Bytes";
+    /**
+     * A date-time string at UTC, such as 2007-12-03T10:15:30Z, compliant with the `date-time` format outlined in section 5.6 of the RFC 3339 profile of the ISO 8601 standard for representation of dates and times using the Gregorian calendar.
+     */
+    dateTime<FieldName extends string>(fieldName: FieldName, ...opts: core.ScalarOutSpread<TypeName, FieldName>): void // "DateTime";
+    /**
+     * An arbitrary-precision Decimal type
+     */
+    decimal<FieldName extends string>(fieldName: FieldName, ...opts: core.ScalarOutSpread<TypeName, FieldName>): void // "Decimal";
+    /**
+     * The `JSONObject` scalar type represents JSON objects as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf).
+     */
+    json<FieldName extends string>(fieldName: FieldName, ...opts: core.ScalarOutSpread<TypeName, FieldName>): void // "Json";
   }
 }
 
@@ -84,31 +110,75 @@ export interface NexusGenScalars {
   Boolean: boolean
   ID: string
   AuthInfo: AuthInfo
-  BigInt: BigInt
-  DateTime: Date
+  BigInt: any
+  Bytes: any
+  DateTime: any
+  Decimal: any
   EmailAddress: string
+  Json: any
   Timestamp: number
 }
 
 export interface NexusGenObjects {
+  Domain: { // root type
+    createdAt: NexusGenScalars['DateTime']; // DateTime!
+    description?: string | null; // String
+    displayName: string; // String!
+    id: NexusGenScalars['BigInt']; // BigInt!
+    roomIds: NexusGenScalars['BigInt'][]; // [BigInt!]!
+    serverId: NexusGenScalars['BigInt']; // BigInt!
+    start: string; // String!
+    thumbnail?: string | null; // String
+    updatedAt: NexusGenScalars['DateTime']; // DateTime!
+  }
+  GroupChat: { // root type
+    createdAt: NexusGenScalars['DateTime']; // DateTime!
+    description: string; // String!
+    displayName: string; // String!
+    id: NexusGenScalars['BigInt']; // BigInt!
+    thumbnail?: string | null; // String
+    updatedAt: NexusGenScalars['DateTime']; // DateTime!
+    userIds: NexusGenScalars['BigInt'][]; // [BigInt!]!
+  }
   Query: {};
+  Room: { // root type
+    createdAt: NexusGenScalars['DateTime']; // DateTime!
+    displayName: string; // String!
+    domainId: NexusGenScalars['BigInt']; // BigInt!
+    id: NexusGenScalars['BigInt']; // BigInt!
+    thumbnail?: string | null; // String
+    updatedAt: NexusGenScalars['DateTime']; // DateTime!
+  }
+  Server: { // root type
+    createdAt: NexusGenScalars['DateTime']; // DateTime!
+    description?: string | null; // String
+    displayName: string; // String!
+    domainIds: NexusGenScalars['BigInt'][]; // [BigInt!]!
+    id: NexusGenScalars['BigInt']; // BigInt!
+    ownerId: NexusGenScalars['BigInt']; // BigInt!
+    start: string; // String!
+    thumbnail?: string | null; // String
+    updatedAt: NexusGenScalars['DateTime']; // DateTime!
+    userIds: NexusGenScalars['BigInt'][]; // [BigInt!]!
+  }
   User: { // root type
-    authInfo: NexusGenScalars['AuthInfo']; // AuthInfo!
+    authInfo: NexusGenScalars['Json']; // Json!
     authProvider: NexusGenEnums['Provider']; // Provider!
     avatar?: string | null; // String
-    createdAt: NexusGenScalars['Timestamp']; // Timestamp!
-    disabled?: boolean | null; // Boolean
+    createdAt: NexusGenScalars['DateTime']; // DateTime!
+    disabled: boolean; // Boolean!
     displayName: string; // String!
-    friends?: Array<NexusGenScalars['BigInt'] | null> | null; // [BigInt]
-    groupchats?: Array<NexusGenScalars['BigInt'] | null> | null; // [BigInt]
+    friends: NexusGenScalars['BigInt'][]; // [BigInt!]!
+    groupChatIds: NexusGenScalars['BigInt'][]; // [BigInt!]!
     id: NexusGenScalars['BigInt']; // BigInt!
-    lastSeen?: NexusGenScalars['Timestamp'] | null; // Timestamp
-    servers?: Array<NexusGenScalars['BigInt'] | null> | null; // [BigInt]
+    lastSeen: string; // String!
+    serverIds: NexusGenScalars['BigInt'][]; // [BigInt!]!
+    updatedAt: NexusGenScalars['DateTime']; // DateTime!
   }
 }
 
 export interface NexusGenInterfaces {
-  Node: NexusGenRootTypes['User'];
+  Node: any;
 }
 
 export interface NexusGenUnions {
@@ -119,22 +189,74 @@ export type NexusGenRootTypes = NexusGenInterfaces & NexusGenObjects
 export type NexusGenAllTypes = NexusGenRootTypes & NexusGenScalars & NexusGenEnums
 
 export interface NexusGenFieldTypes {
+  Domain: { // field return type
+    createdAt: NexusGenScalars['DateTime']; // DateTime!
+    description: string | null; // String
+    displayName: string; // String!
+    id: NexusGenScalars['BigInt']; // BigInt!
+    roomIds: NexusGenScalars['BigInt'][]; // [BigInt!]!
+    rooms: NexusGenRootTypes['Room'][]; // [Room!]!
+    server: NexusGenRootTypes['Server']; // Server!
+    serverId: NexusGenScalars['BigInt']; // BigInt!
+    start: string; // String!
+    thumbnail: string | null; // String
+    updatedAt: NexusGenScalars['DateTime']; // DateTime!
+  }
+  GroupChat: { // field return type
+    createdAt: NexusGenScalars['DateTime']; // DateTime!
+    description: string; // String!
+    displayName: string; // String!
+    id: NexusGenScalars['BigInt']; // BigInt!
+    thumbnail: string | null; // String
+    updatedAt: NexusGenScalars['DateTime']; // DateTime!
+    userIds: NexusGenScalars['BigInt'][]; // [BigInt!]!
+    users: NexusGenRootTypes['User'][]; // [User!]!
+  }
   Query: { // field return type
-    userById: NexusGenRootTypes['User'] | null; // User
-    userByName: NexusGenRootTypes['User'] | null; // User
+    userById: NexusGenScalars['Json'] | null; // Json
+    userByName: NexusGenScalars['Json'] | null; // Json
+    usersCommonality: NexusGenScalars['Json'] | null; // Json
+  }
+  Room: { // field return type
+    createdAt: NexusGenScalars['DateTime']; // DateTime!
+    displayName: string; // String!
+    domain: NexusGenRootTypes['Domain']; // Domain!
+    domainId: NexusGenScalars['BigInt']; // BigInt!
+    id: NexusGenScalars['BigInt']; // BigInt!
+    thumbnail: string | null; // String
+    updatedAt: NexusGenScalars['DateTime']; // DateTime!
+  }
+  Server: { // field return type
+    createdAt: NexusGenScalars['DateTime']; // DateTime!
+    description: string | null; // String
+    displayName: string; // String!
+    domainIds: NexusGenScalars['BigInt'][]; // [BigInt!]!
+    domains: NexusGenRootTypes['Domain'][]; // [Domain!]!
+    id: NexusGenScalars['BigInt']; // BigInt!
+    owner: NexusGenRootTypes['User']; // User!
+    ownerId: NexusGenScalars['BigInt']; // BigInt!
+    start: string; // String!
+    thumbnail: string | null; // String
+    updatedAt: NexusGenScalars['DateTime']; // DateTime!
+    userIds: NexusGenScalars['BigInt'][]; // [BigInt!]!
+    users: NexusGenRootTypes['User'][]; // [User!]!
   }
   User: { // field return type
-    authInfo: NexusGenScalars['AuthInfo']; // AuthInfo!
+    authInfo: NexusGenScalars['Json']; // Json!
     authProvider: NexusGenEnums['Provider']; // Provider!
     avatar: string | null; // String
-    createdAt: NexusGenScalars['Timestamp']; // Timestamp!
-    disabled: boolean | null; // Boolean
+    createdAt: NexusGenScalars['DateTime']; // DateTime!
+    disabled: boolean; // Boolean!
     displayName: string; // String!
-    friends: Array<NexusGenScalars['BigInt'] | null> | null; // [BigInt]
-    groupchats: Array<NexusGenScalars['BigInt'] | null> | null; // [BigInt]
+    friends: NexusGenScalars['BigInt'][]; // [BigInt!]!
+    groupChatIds: NexusGenScalars['BigInt'][]; // [BigInt!]!
+    groupChats: NexusGenRootTypes['GroupChat'][]; // [GroupChat!]!
     id: NexusGenScalars['BigInt']; // BigInt!
-    lastSeen: NexusGenScalars['Timestamp'] | null; // Timestamp
-    servers: Array<NexusGenScalars['BigInt'] | null> | null; // [BigInt]
+    lastSeen: string; // String!
+    ownedServers: NexusGenRootTypes['Server'][]; // [Server!]!
+    serverIds: NexusGenScalars['BigInt'][]; // [BigInt!]!
+    servers: NexusGenRootTypes['Server'][]; // [Server!]!
+    updatedAt: NexusGenScalars['DateTime']; // DateTime!
   }
   Node: { // field return type
     id: NexusGenScalars['BigInt']; // BigInt!
@@ -142,22 +264,74 @@ export interface NexusGenFieldTypes {
 }
 
 export interface NexusGenFieldTypeNames {
+  Domain: { // field return type name
+    createdAt: 'DateTime'
+    description: 'String'
+    displayName: 'String'
+    id: 'BigInt'
+    roomIds: 'BigInt'
+    rooms: 'Room'
+    server: 'Server'
+    serverId: 'BigInt'
+    start: 'String'
+    thumbnail: 'String'
+    updatedAt: 'DateTime'
+  }
+  GroupChat: { // field return type name
+    createdAt: 'DateTime'
+    description: 'String'
+    displayName: 'String'
+    id: 'BigInt'
+    thumbnail: 'String'
+    updatedAt: 'DateTime'
+    userIds: 'BigInt'
+    users: 'User'
+  }
   Query: { // field return type name
-    userById: 'User'
-    userByName: 'User'
+    userById: 'Json'
+    userByName: 'Json'
+    usersCommonality: 'Json'
+  }
+  Room: { // field return type name
+    createdAt: 'DateTime'
+    displayName: 'String'
+    domain: 'Domain'
+    domainId: 'BigInt'
+    id: 'BigInt'
+    thumbnail: 'String'
+    updatedAt: 'DateTime'
+  }
+  Server: { // field return type name
+    createdAt: 'DateTime'
+    description: 'String'
+    displayName: 'String'
+    domainIds: 'BigInt'
+    domains: 'Domain'
+    id: 'BigInt'
+    owner: 'User'
+    ownerId: 'BigInt'
+    start: 'String'
+    thumbnail: 'String'
+    updatedAt: 'DateTime'
+    userIds: 'BigInt'
+    users: 'User'
   }
   User: { // field return type name
-    authInfo: 'AuthInfo'
+    authInfo: 'Json'
     authProvider: 'Provider'
     avatar: 'String'
-    createdAt: 'Timestamp'
+    createdAt: 'DateTime'
     disabled: 'Boolean'
     displayName: 'String'
     friends: 'BigInt'
-    groupchats: 'BigInt'
+    groupChatIds: 'BigInt'
+    groupChats: 'GroupChat'
     id: 'BigInt'
-    lastSeen: 'Timestamp'
-    servers: 'BigInt'
+    lastSeen: 'String'
+    ownedServers: 'Server'
+    serverIds: 'BigInt'
+    servers: 'Server'
+    updatedAt: 'DateTime'
   }
   Node: { // field return type name
     id: 'BigInt'
@@ -172,15 +346,17 @@ export interface NexusGenArgTypes {
     userByName: { // args
       displayName: string; // String!
     }
+    usersCommonality: { // args
+      firstUserId: NexusGenScalars['BigInt']; // BigInt!
+      secondUserId: NexusGenScalars['BigInt']; // BigInt!
+    }
   }
 }
 
 export interface NexusGenAbstractTypeMembers {
-  Node: "User"
 }
 
 export interface NexusGenTypeInterfaces {
-  User: "Node"
 }
 
 export type NexusGenObjectNames = keyof NexusGenObjects;

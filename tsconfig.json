@@ -13,8 +13,9 @@
     "outDir": "dist",
     "rootDir": "src",
     "paths": {
-      "@generated/*": ["prisma/generated/*"],
-      "@util/*": ["src/util/*"]
+      "@util/*": ["src/util/*"],
+      "@root/*": ["src/*"],
+      "@api/*": ["src/api/*"]
     }
   },
   "include": [

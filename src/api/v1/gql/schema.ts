@@ -2,8 +2,8 @@ import { makeSchema } from 'nexus';
 import NexusPrismaScalars from 'nexus-prisma/scalars';
 import path from 'path';
 
-import * as types from '.';
 import { root } from '../../../util/constants';
+import * as types from './nexus';
 
 export default makeSchema({
   types: [types, NexusPrismaScalars],
