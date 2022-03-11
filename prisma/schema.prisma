@@ -22,9 +22,30 @@ enum Provider {
   TWITTER
 }
 
+model Account {
+  /// Snowflake (simpleflake) based BigInt ID
+  id           BigInt   @id
+  createdAt    DateTime @default(now())
+  /// ISO date this row was last updated
+  updatedAt    DateTime @updatedAt
+  /// Whether account is globally disabled
+  disabled     Boolean  @default(false)
+  /// Auth provider ID list. Format: [{"provider": "TWITTER", "id": "id_here"}, ...]
+  authInfo     Json[]
+  /// Original/primary auth provider
+  authProvider Provider @default(EMAIL)
+  email        String?
+  password     String?
+  users        User[]
+}
+
 model User {
   /// Snowflake (simpleflake) based BigInt ID
   id           BigInt      @id
+  /// Prisma client relation to account connected to user
+  account      Account     @relation(fields: [accountId], references: [id])
+  /// Account ID that this user is connected to
+  accountId    BigInt
   /// Global display name
   displayName  String
   /// URL for user's avatar
@@ -32,10 +53,6 @@ model User {
   createdAt    DateTime    @default(now())
   /// Timestamp in milliseconds since epoch the user was last active
   lastSeen     String
-  /// JSON {password?: string, ids?: string[]} where `ids` is email or auth provider ID list
-  authInfo     Json        @default("{}")
-  /// Original/primary auth provider
-  authProvider Provider    @default(EMAIL)
   /// Whether user is globally disabled
   disabled     Boolean     @default(false)
   /// Prisma client relation to servers user is a member of
@@ -43,7 +60,7 @@ model User {
   /// Array of server IDs the user is a member of
   serverIds    BigInt[]
   /// Array of user IDs the user is friends with
-  friends      BigInt[]
+  friendIds    BigInt[]
   /// Array of GroupChat IDs for group chats the user is a member of
   groupChatIds BigInt[]
   /// Prisma client relation to group chat's the user is a member of

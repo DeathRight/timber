@@ -1,17 +1,13 @@
+import { Provider } from '@prisma/client';
 import { Kind } from 'graphql';
 import { asNexusMethod, scalarType } from 'nexus';
 
-export enum ProvidersE {
-  EMAIL = 0,
-  GOOGLE = 1,
-  TWITTER = 2,
-  GITHUB = 3,
-}
-
-export type AuthInfo = {
-  password?: string;
-  ids?: string[];
+export type ProviderInfo = {
+  provider: Provider;
+  id: string;
 };
+
+export type AuthInfo = ProviderInfo[];
 
 export const AuthInfo = scalarType({
   name: "AuthInfo",
@@ -20,8 +16,7 @@ export const AuthInfo = scalarType({
     export: "AuthInfo",
   },
   asNexusMethod: "authinfo",
-  description:
-    "AuthInfo JSON object, with linked 3rd party provider IDs and/or user email under 'ids'",
+  description: `AuthInfo JSON object. Format: [{"provider": "TWITTER", "id": "id_here"}]`,
   parseValue(value) {
     return JSON.parse(value as string) as AuthInfo;
   },

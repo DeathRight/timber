@@ -1,4 +1,3 @@
-import { User as PrismaUser } from '@prisma/client';
 import mercurius from 'mercurius';
 import { objectType, queryField } from 'nexus';
 import { User } from 'nexus-prisma';
@@ -11,16 +10,16 @@ export const UserObject = objectType({
   description: u.$description,
   definition(t) {
     t.field(u.id);
+    t.field(u.accountId);
+    t.field(u.account);
     t.field(u.displayName);
     t.field(u.avatar);
     t.field(u.createdAt);
     t.field(u.lastSeen);
-    t.field(u.authInfo);
-    t.field(u.authProvider);
     t.field(u.disabled);
     t.field(u.servers);
     t.field(u.serverIds);
-    t.field(u.friends);
+    t.field(u.friendIds);
     t.field(u.groupChatIds);
     t.field(u.groupChats);
     t.field(u.updatedAt);
@@ -29,14 +28,16 @@ export const UserObject = objectType({
 });
 
 export const userByIdQuery = queryField("userById", {
-  type: "Json",
+  type: "User",
+  description:
+    "Returns user with `id`. Only public fields will be available unless user is current user",
   args: {
     id: u.id.type,
   },
   async resolve(_, args, ctx) {
     const authUser = ctx.user!;
     const prisma = ctx.prisma;
-    let usr: Partial<PrismaUser> | null | undefined;
+    let usr: any;
     if (authUser.id !== args.id) {
       usr = await prisma.user.findUnique({
         where: {
@@ -64,14 +65,16 @@ export const userByIdQuery = queryField("userById", {
 });
 
 export const userByNameQuery = queryField("userByName", {
-  type: "Json",
+  type: "User",
+  description:
+    "Returns user with `displayName`. Only public fields will be available unless user is current user",
   args: {
     displayName: u.displayName.type,
   },
   async resolve(_, args, ctx) {
     const authUser = ctx.user!;
     const prisma = ctx.prisma;
-    let usr: Partial<PrismaUser> | null | undefined;
+    let usr: any;
     if (authUser.displayName !== args.displayName) {
       usr = await prisma.user.findFirst({
         where: {
@@ -99,6 +102,7 @@ export const userByNameQuery = queryField("userByName", {
 
 export const usersCommonality = queryField("usersCommonality", {
   type: "Json",
+  description: "Returns serverIds and friendIds common between two users",
   args: {
     firstUserId: u.id.type,
     secondUserId: u.id.type,
@@ -110,11 +114,11 @@ export const usersCommonality = queryField("usersCommonality", {
 
     const usr1 = await prisma.user.findUnique({
       where: { id: args.firstUserId },
-      select: { friends: true, serverIds: true },
+      select: { friendIds: true, serverIds: true },
     });
     const usr2 = await prisma.user.findUnique({
       where: { id: args.secondUserId },
-      select: { friends: true, serverIds: true },
+      select: { friendIds: true, serverIds: true },
     });
     if (!usr1 || !usr2) {
       const ids = [];
@@ -124,7 +128,7 @@ export const usersCommonality = queryField("usersCommonality", {
     }
 
     const serverIds = intersectIds(usr1.serverIds, usr2.serverIds);
-    const friendIds = intersectIds(usr1.friends, usr2.friends);
+    const friendIds = intersectIds(usr1.friendIds, usr2.friendIds);
     return { friendIds: friendIds, serverIds: serverIds };
   },
 });
