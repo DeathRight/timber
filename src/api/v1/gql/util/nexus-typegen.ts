@@ -4,8 +4,8 @@
  */
 
 
-import type { Context } from "./../../../../util/context"
-import type { AuthInfo } from "./../nexus"
+import type { Context } from "./context"
+import type { AuthInfo } from "./../schema/types"
 import type { core } from "nexus"
 declare global {
   interface NexusGenCustomInputMethods<TypeName extends string> {
@@ -113,11 +113,11 @@ export interface NexusGenScalars {
 export interface NexusGenObjects {
   Account: { // root type
     authInfo?: NexusGenScalars['AuthInfo'] | null; // AuthInfo
-    authProvider: NexusGenEnums['Provider']; // Provider!
+    authProvider?: NexusGenEnums['Provider'] | null; // Provider
     createdAt: NexusGenScalars['DateTime']; // DateTime!
     disabled: boolean; // Boolean!
     email?: NexusGenScalars['EmailAddress'] | null; // EmailAddress
-    id: NexusGenScalars['BigInt']; // BigInt!
+    id: string; // ID!
     password?: string | null; // String
     updatedAt: NexusGenScalars['DateTime']; // DateTime!
   }
@@ -163,7 +163,7 @@ export interface NexusGenObjects {
     userIds: NexusGenScalars['BigInt'][]; // [BigInt!]!
   }
   User: { // root type
-    accountId: NexusGenScalars['BigInt']; // BigInt!
+    accountId: string; // String!
     avatar?: string | null; // String
     createdAt: NexusGenScalars['DateTime']; // DateTime!
     disabled: boolean; // Boolean!
@@ -171,7 +171,7 @@ export interface NexusGenObjects {
     friendIds: NexusGenScalars['BigInt'][]; // [BigInt!]!
     groupChatIds: NexusGenScalars['BigInt'][]; // [BigInt!]!
     id: NexusGenScalars['BigInt']; // BigInt!
-    lastSeen: string; // String!
+    lastSeen: number; // Int!
     serverIds: NexusGenScalars['BigInt'][]; // [BigInt!]!
     updatedAt: NexusGenScalars['DateTime']; // DateTime!
   }
@@ -190,11 +190,11 @@ export type NexusGenAllTypes = NexusGenRootTypes & NexusGenScalars & NexusGenEnu
 export interface NexusGenFieldTypes {
   Account: { // field return type
     authInfo: NexusGenScalars['AuthInfo'] | null; // AuthInfo
-    authProvider: NexusGenEnums['Provider']; // Provider!
+    authProvider: NexusGenEnums['Provider'] | null; // Provider
     createdAt: NexusGenScalars['DateTime']; // DateTime!
     disabled: boolean; // Boolean!
     email: NexusGenScalars['EmailAddress'] | null; // EmailAddress
-    id: NexusGenScalars['BigInt']; // BigInt!
+    id: string; // ID!
     password: string | null; // String
     updatedAt: NexusGenScalars['DateTime']; // DateTime!
     users: NexusGenRootTypes['User'][]; // [User!]!
@@ -254,7 +254,7 @@ export interface NexusGenFieldTypes {
   }
   User: { // field return type
     account: NexusGenRootTypes['Account']; // Account!
-    accountId: NexusGenScalars['BigInt']; // BigInt!
+    accountId: string; // String!
     avatar: string | null; // String
     createdAt: NexusGenScalars['DateTime']; // DateTime!
     disabled: boolean; // Boolean!
@@ -263,7 +263,7 @@ export interface NexusGenFieldTypes {
     groupChatIds: NexusGenScalars['BigInt'][]; // [BigInt!]!
     groupChats: NexusGenRootTypes['GroupChat'][]; // [GroupChat!]!
     id: NexusGenScalars['BigInt']; // BigInt!
-    lastSeen: string; // String!
+    lastSeen: number; // Int!
     ownedServers: NexusGenRootTypes['Server'][]; // [Server!]!
     serverIds: NexusGenScalars['BigInt'][]; // [BigInt!]!
     servers: NexusGenRootTypes['Server'][]; // [Server!]!
@@ -278,7 +278,7 @@ export interface NexusGenFieldTypeNames {
     createdAt: 'DateTime'
     disabled: 'Boolean'
     email: 'EmailAddress'
-    id: 'BigInt'
+    id: 'ID'
     password: 'String'
     updatedAt: 'DateTime'
     users: 'User'
@@ -338,7 +338,7 @@ export interface NexusGenFieldTypeNames {
   }
   User: { // field return type name
     account: 'Account'
-    accountId: 'BigInt'
+    accountId: 'String'
     avatar: 'String'
     createdAt: 'DateTime'
     disabled: 'Boolean'
@@ -347,7 +347,7 @@ export interface NexusGenFieldTypeNames {
     groupChatIds: 'BigInt'
     groupChats: 'GroupChat'
     id: 'BigInt'
-    lastSeen: 'String'
+    lastSeen: 'Int'
     ownedServers: 'Server'
     serverIds: 'BigInt'
     servers: 'Server'

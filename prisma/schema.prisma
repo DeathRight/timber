@@ -24,16 +24,16 @@ enum Provider {
 
 model Account {
   /// Snowflake (simpleflake) based BigInt ID
-  id           BigInt   @id
-  createdAt    DateTime @default(now())
+  id           String    @id
+  createdAt    DateTime  @default(now())
   /// ISO date this row was last updated
-  updatedAt    DateTime @updatedAt
+  updatedAt    DateTime  @updatedAt
   /// Whether account is globally disabled
-  disabled     Boolean  @default(false)
+  disabled     Boolean   @default(false)
   /// Auth provider ID list. Format: [{"provider": "TWITTER", "id": "id_here"}, ...]
   authInfo     Json[]
   /// Original/primary auth provider
-  authProvider Provider @default(EMAIL)
+  authProvider Provider? @default(EMAIL)
   email        String?
   password     String?
   users        User[]
@@ -45,14 +45,14 @@ model User {
   /// Prisma client relation to account connected to user
   account      Account     @relation(fields: [accountId], references: [id])
   /// Account ID that this user is connected to
-  accountId    BigInt
+  accountId    String
   /// Global display name
   displayName  String
   /// URL for user's avatar
   avatar       String?
   createdAt    DateTime    @default(now())
   /// Timestamp in milliseconds since epoch the user was last active
-  lastSeen     String
+  lastSeen     Int
   /// Whether user is globally disabled
   disabled     Boolean     @default(false)
   /// Prisma client relation to servers user is a member of

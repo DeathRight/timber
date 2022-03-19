@@ -15,6 +15,7 @@ build
 priv.env
 .env.local
 serviceAccountKey.json
+secret-key
 
 # editor
 .vscode

@@ -2,7 +2,7 @@ import mercurius from 'mercurius';
 import { objectType, queryField } from 'nexus';
 import { User } from 'nexus-prisma';
 
-import { intersectIds } from '../../../../util';
+import { intersectIds } from '../../../../../util';
 
 const u = User;
 export const UserObject = objectType({
@@ -35,7 +35,7 @@ export const userByIdQuery = queryField("userById", {
     id: u.id.type,
   },
   async resolve(_, args, ctx) {
-    const authUser = ctx.user!;
+    const authUser = ctx.auth.user;
     const prisma = ctx.prisma;
     let usr: any;
     if (authUser.id !== args.id) {
@@ -72,7 +72,7 @@ export const userByNameQuery = queryField("userByName", {
     displayName: u.displayName.type,
   },
   async resolve(_, args, ctx) {
-    const authUser = ctx.user!;
+    const authUser = ctx.auth.user;
     const prisma = ctx.prisma;
     let usr: any;
     if (authUser.displayName !== args.displayName) {
@@ -108,9 +108,7 @@ export const usersCommonality = queryField("usersCommonality", {
     secondUserId: u.id.type,
   },
   async resolve(_, args, ctx) {
-    const authUser = ctx.user!;
     const prisma = ctx.prisma;
-    let commonality: { friends: []; servers: [] };
 
     const usr1 = await prisma.user.findUnique({
       where: { id: args.firstUserId },
@@ -147,3 +145,10 @@ export const usersCommonality = queryField("usersCommonality", {
   async resolve(_, args, ctx) {},
 });*/
 // TODO
+
+/*export const createUser = mutationField("createUser", {
+  type: "User",
+  async resolve(_, args, ctx) {
+    const pubsub = ctx.pubsub!;
+  },
+});*/

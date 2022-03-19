@@ -6,6 +6,7 @@ declare global {
       REDIS_URL: string;
       REDIS_USERNAME: string;
       REDIS_PASSWORD: string;
+      PROD: boolean;
     }
   }
 }

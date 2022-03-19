@@ -1,5 +1,5 @@
-import { FastifyReply, FastifyRequest } from 'fastify';
-import { auth } from 'firebase-admin/lib/auth/auth-namespace';
+import { FastifyRequest } from 'fastify';
+import { auth } from 'firebase-admin';
 
 export const getAuthToken = (req: FastifyRequest) => {
   const authHeader = req.headers.authorization;
@@ -12,11 +12,12 @@ export const getAuthToken = (req: FastifyRequest) => {
   return undefined;
 };
 
-export const verifyToken = async (
-  req: FastifyRequest,
-  reply: FastifyReply,
-  done: (err: Error) => void
-) => {
+/**
+ * Takes Firebase JWT from authorization header and verifies it
+ * @param req FastifyRequest
+ * @returns Decoded ID token
+ */
+export const verifyToken = async (req: FastifyRequest) => {
   const token = getAuthToken(req);
   if (token) {
     try {

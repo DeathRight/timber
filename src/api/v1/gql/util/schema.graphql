@@ -9,7 +9,7 @@ type Account {
   authInfo: AuthInfo
 
   """Original/primary auth provider"""
-  authProvider: Provider!
+  authProvider: Provider
   createdAt: DateTime!
 
   """Whether account is globally disabled"""
@@ -17,7 +17,7 @@ type Account {
   email: EmailAddress
 
   """Snowflake (simpleflake) based BigInt ID"""
-  id: BigInt!
+  id: ID!
   password: String
 
   """ISO date this row was last updated"""
@@ -217,7 +217,7 @@ type User {
   account: Account!
 
   """Account ID that this user is connected to"""
-  accountId: BigInt!
+  accountId: String!
 
   """URL for user's avatar"""
   avatar: String
@@ -242,7 +242,7 @@ type User {
   id: BigInt!
 
   """Timestamp in milliseconds since epoch the user was last active"""
-  lastSeen: String!
+  lastSeen: Int!
 
   """Prisma client relation to servers user owns"""
   ownedServers: [Server!]!

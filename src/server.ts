@@ -1,8 +1,7 @@
 import dotenv from 'dotenv';
-import path from 'path';
 import { types } from 'pg';
 
-import startServer from './api/startServer';
+import start from './api/start';
 import { epoch, root } from './util/constants';
 
 // https://github.com/brianc/node-pg-types/issues/78
@@ -17,5 +16,5 @@ console.log(process.env.REDIS_URL);
 console.log(root);
 
 console.log(epoch);
-
-startServer();
+/* ------------------------------ Start Server ------------------------------ */
+start();
