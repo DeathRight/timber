@@ -1,4 +1,4 @@
-import { User } from '@prisma/client';
+import { Account, User } from '@prisma/client';
 import { DecodedIdToken } from 'firebase-admin/lib/auth/token-verifier';
 
 /*export const authCheck = (ctx: Context) => {
@@ -11,14 +11,21 @@ import { DecodedIdToken } from 'firebase-admin/lib/auth/token-verifier';
 export class GQLAuth {
   token: DecodedIdToken;
   accountId: string;
+  account: Account;
   user: User;
 
+  /**
+   * Determines whether user ID is a member of client account
+   * @param uid User ID to check against
+   * @returns
+   */
   isClient = (uid: bigint) => {
-    return this.user?.id === uid;
+    return this.user.id === uid || this.account.userIds.includes(uid);
   };
-  constructor(token: DecodedIdToken, user: User) {
+  constructor(token: DecodedIdToken, account: Account, user: User) {
     this.token = token;
-    this.accountId = token.uid;
+    this.accountId = account.id;
+    this.account = account;
     this.user = user;
   }
 }

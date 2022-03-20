@@ -1,4 +1,4 @@
-import { prisma, User } from '@prisma/client';
+import { Account, prisma, User } from '@prisma/client';
 import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import fastifySecureSession from 'fastify-secure-session';
 import { readFileSync } from 'fs';
@@ -11,6 +11,7 @@ import { verifyToken } from './firebase-auth';
 import schemav1 from './gql/schema';
 import { GQLAuth } from './gql/util/auth';
 import { Context } from './gql/util/context';
+import { getAccountFromId } from './gql/util/db/account';
 import { getUserFromAccount } from './gql/util/db/user';
 
 export default async function (fastify: FastifyInstance, opts: any, done: any) {
@@ -41,7 +42,10 @@ export default async function (fastify: FastifyInstance, opts: any, done: any) {
     schema: schemav1 as unknown as GraphQLSchema,
     graphiql: true,
     prefix: "/api/v1/",
-    context: (req: FastifyRequest, reply: FastifyReply): Context => {
+    context: (
+      req: FastifyRequest,
+      reply: FastifyReply
+    ): Context | Record<string, any> => {
       return {
         req,
         reply,
@@ -59,9 +63,10 @@ export default async function (fastify: FastifyInstance, opts: any, done: any) {
       const req = ctx.req;
       const decodedToken = await verifyToken(req);
       const user = req.session.get("user") as User | undefined;
+      const account = req.session.get("account") as Account | undefined;
 
-      if (decodedToken && user) {
-        ctx.auth = new GQLAuth(decodedToken, user);
+      if (decodedToken && user && account) {
+        ctx.auth = new GQLAuth(decodedToken, account, user);
       } else {
         ctx.reply.hijack();
         if (!decodedToken) ctx.reply.unauthorized("Token not valid!");
@@ -89,6 +94,7 @@ export default async function (fastify: FastifyInstance, opts: any, done: any) {
     async (req, reply) => {
       const decodedToken = await verifyToken(req);
       let user: User | undefined;
+      let account: Account | undefined;
 
       if (decodedToken) {
         const userId = req.query.userId;
@@ -104,6 +110,17 @@ export default async function (fastify: FastifyInstance, opts: any, done: any) {
 
         if (user) {
           req.session.set("user", user);
+          account =
+            (await getAccountFromId(fastify.prisma, user.accountId)) ??
+            undefined;
+          if (account) {
+            req.session.set("account", account);
+          } else {
+            // Should never reach unless database outage for some reason
+            reply.internalServerError(
+              "Could not find associated account. Please report!"
+            );
+          }
           reply.code(200).send();
         } else {
           reply.notFound("userId missing or user not found");

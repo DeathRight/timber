@@ -120,6 +120,7 @@ export interface NexusGenObjects {
     id: string; // ID!
     password?: string | null; // String
     updatedAt: NexusGenScalars['DateTime']; // DateTime!
+    userIds: NexusGenScalars['BigInt'][]; // [BigInt!]!
   }
   Domain: { // root type
     createdAt: NexusGenScalars['DateTime']; // DateTime!
@@ -197,6 +198,7 @@ export interface NexusGenFieldTypes {
     id: string; // ID!
     password: string | null; // String
     updatedAt: NexusGenScalars['DateTime']; // DateTime!
+    userIds: NexusGenScalars['BigInt'][]; // [BigInt!]!
     users: NexusGenRootTypes['User'][]; // [User!]!
   }
   Domain: { // field return type
@@ -226,7 +228,7 @@ export interface NexusGenFieldTypes {
     serverById: NexusGenRootTypes['Server'] | null; // Server
     userById: NexusGenRootTypes['User'] | null; // User
     userByName: NexusGenRootTypes['User'] | null; // User
-    usersCommonality: NexusGenScalars['Json'] | null; // Json
+    userCommonality: NexusGenScalars['Json'] | null; // Json
   }
   Room: { // field return type
     createdAt: NexusGenScalars['DateTime']; // DateTime!
@@ -281,6 +283,7 @@ export interface NexusGenFieldTypeNames {
     id: 'ID'
     password: 'String'
     updatedAt: 'DateTime'
+    userIds: 'BigInt'
     users: 'User'
   }
   Domain: { // field return type name
@@ -310,7 +313,7 @@ export interface NexusGenFieldTypeNames {
     serverById: 'Server'
     userById: 'User'
     userByName: 'User'
-    usersCommonality: 'Json'
+    userCommonality: 'Json'
   }
   Room: { // field return type name
     createdAt: 'DateTime'
@@ -366,9 +369,8 @@ export interface NexusGenArgTypes {
     userByName: { // args
       displayName: string; // String!
     }
-    usersCommonality: { // args
-      firstUserId: NexusGenScalars['BigInt']; // BigInt!
-      secondUserId: NexusGenScalars['BigInt']; // BigInt!
+    userCommonality: { // args
+      uid: NexusGenScalars['BigInt']; // BigInt!
     }
   }
 }

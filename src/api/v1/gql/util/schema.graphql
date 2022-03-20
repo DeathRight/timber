@@ -22,6 +22,7 @@ type Account {
 
   """ISO date this row was last updated"""
   updatedAt: DateTime!
+  userIds: [BigInt!]!
   users: [User!]!
 }
 
@@ -130,7 +131,7 @@ type Query {
   serverById(id: BigInt!): Server
 
   """
-  Returns user with `id`. Only public fields will be available unless user is current user
+  Returns user with `id`. Sensitive fields will be empty unless user is current user
   """
   userById(id: BigInt!): User
 
@@ -139,8 +140,10 @@ type Query {
   """
   userByName(displayName: String!): User
 
-  """Returns serverIds and friendIds common between two users"""
-  usersCommonality(firstUserId: BigInt!, secondUserId: BigInt!): Json
+  """
+  Returns serverIds and friendIds common between current user and another user
+  """
+  userCommonality(uid: BigInt!): Json
 }
 
 type Room {

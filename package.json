@@ -4,9 +4,9 @@
   "description": "Fastify+GraphQL backend for TavernChat",
   "type": "module",
   "scripts": {
-    "dev": "ts-node-dev --transpile-only --no-notify src/server.ts",
-    "build": "tsc",
-    "generate": "ts-node --transpile-only src/schema",
+    "dev": "ts-node-dev --no-notify src/server.ts",
+    "build": "ttsc",
+    "generate": "ts-node src/api/v1/gql/schema/index.ts",
     "test": "npm run generate && jest"
   },
   "jest": {
@@ -68,8 +68,11 @@
     "@types/pg": "^8.6.4",
     "@types/ws": "^8.2.3",
     "prisma": "^3.10.0",
+    "ts-node": "^10.7.0",
     "ts-node-dev": "^1.1.8",
     "tsconfig-paths": "^3.14.0",
-    "typescript": "^4.5.5"
+    "ttypescript": "^1.5.13",
+    "typescript": "^4.5.5",
+    "typescript-transform-paths": "^3.3.1"
   }
 }

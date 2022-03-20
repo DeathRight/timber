@@ -36,6 +36,7 @@ model Account {
   authProvider Provider? @default(EMAIL)
   email        String?
   password     String?
+  userIds      BigInt[]
   users        User[]
 }
 
