@@ -42,10 +42,7 @@ export default async function (fastify: FastifyInstance, opts: any, done: any) {
     schema: schemav1 as unknown as GraphQLSchema,
     graphiql: true,
     prefix: "/api/v1/",
-    context: (
-      req: FastifyRequest,
-      reply: FastifyReply
-    ): Context | Record<string, any> => {
+    context: (req: FastifyRequest, reply: FastifyReply) => {
       return {
         req,
         reply,

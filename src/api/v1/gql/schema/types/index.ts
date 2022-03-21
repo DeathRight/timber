@@ -7,3 +7,4 @@ export * from "./room";
 export * from "./groupChat";
 export * from "./provider";
 export * from "./types";
+export * from "./invite";

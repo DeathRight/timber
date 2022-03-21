@@ -1,8 +1,7 @@
+import start from '@api/start';
+import { epoch, root } from '@util/constants';
 import dotenv from 'dotenv';
 import { types } from 'pg';
-
-import start from './api/start';
-import { epoch, root } from './util/constants';
 
 // https://github.com/brianc/node-pg-types/issues/78
 types.setTypeParser(20, BigInt);

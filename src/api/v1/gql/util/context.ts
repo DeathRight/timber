@@ -1,12 +1,10 @@
 import { GQLAuth } from '@api/v1/gql/util/auth';
 import { PrismaClient } from '@prisma/client';
-import { FastifyReply, FastifyRequest } from 'fastify';
-import { MQEmitterRedis } from 'mqemitter-redis';
+import { FastifyRequest } from 'fastify';
+import { MercuriusContext } from 'mercurius';
 
-export interface Context {
+export interface Context extends MercuriusContext {
   req: FastifyRequest;
-  reply: FastifyReply;
   prisma: PrismaClient;
   auth: GQLAuth;
-  pubsub?: MQEmitterRedis;
 }

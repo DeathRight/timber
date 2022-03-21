@@ -161,3 +161,21 @@ model GroupChat {
   /// Array of user IDs that are members of this group chat
   userIds     BigInt[]
 }
+
+enum InviteType {
+  Server
+  GroupChat
+  /// Friend request
+  Friend
+}
+
+model Invite {
+  /// Snowflake (simpleflake) based BigInt ID
+  id        BigInt     @id
+  /// Invite enum
+  type      InviteType
+  /// ID of what the invite is for
+  partyId   BigInt
+  /// Expiration ISO date
+  expiresAt DateTime?
+}

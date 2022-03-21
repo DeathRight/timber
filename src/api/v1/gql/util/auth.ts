@@ -22,6 +22,21 @@ export class GQLAuth {
   isClient = (uid: bigint) => {
     return this.user.id === uid || this.account.userIds.includes(uid);
   };
+
+  /**
+   * Sanitizes User of sensitive information and returns the result for public consumption
+   * @param usr User to sanitize
+   * @returns User with sensitive information sanitized
+   */
+  userToPublic = (usr?: User | null) => {
+    if (!usr) return null;
+    usr.accountId = "";
+    usr.serverIds = [];
+    usr.groupChatIds = [];
+    usr.friendIds = [];
+    return usr;
+  };
+
   constructor(token: DecodedIdToken, account: Account, user: User) {
     this.token = token;
     this.accountId = account.id;

@@ -1,8 +1,10 @@
 {
   "ts-node": {
-    "require": ["typescript-transform-paths/register"], //["tsconfig-paths/register"],
-    "transpileOnly": true,
-    "compiler": "ttypescript"
+    "require": ["tsconfig-paths/register"],
+    "swc": true,
+    "compilerOptions": {
+      "module": "CommonJS"
+    }
   },
   "compilerOptions": {
     "sourceMap": true,
@@ -13,10 +15,10 @@
     "moduleResolution": "node",
     "resolveJsonModule": true,
     "allowSyntheticDefaultImports": true,
-    "lib": ["ES2021"],
-    "module": "commonjs",
-    "target": "ES2021",
-    "baseUrl": ".",
+    "lib": ["ESNext"],
+    "module": "ESNext",
+    "target": "ESNext",
+    "baseUrl": "./",
     "outDir": "dist",
     "rootDir": "src",
     "paths": {
@@ -24,13 +26,7 @@
       "@util/*": ["src/util/*"],
       "@root/*": ["src/*"],
       "@api/*": ["src/api/*"]
-    },
-    "plugins": [
-      // Transform paths in output .js files
-      { "transform": "typescript-transform-paths" },
-      // Transform paths in output .d.ts files (Include this line if you output declarations files)
-      { "transform": "typescript-transform-paths", "afterDeclarations": true }
-    ]
+    }
   },
   "include": ["src/**/*", "prisma/generated/**/*"]
 }

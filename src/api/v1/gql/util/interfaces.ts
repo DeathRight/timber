@@ -14,3 +14,9 @@ export interface PageResult<T = any> {
   result: any[];
   count: number;
 }
+
+export const topics = {
+  userChanged: (uid: bigint) => `USER:CHANGED:${uid.toString()}`,
+  userCreated: () => `ACCOUNT:USER:CREATED`,
+  accountChanged: (aid: string) => `ACCOUNT:CHANGED:${aid}`,
+};

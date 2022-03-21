@@ -1,10 +1,10 @@
-import serviceAccountKey from '@util/Firebase/serviceAccountKey.json';
 import Fastify from 'fastify';
 import fastifyRateLimit from 'fastify-rate-limit';
 import fastifySensible from 'fastify-sensible';
 import { cert, initializeApp } from 'firebase-admin/app';
 
 import prismaPlugin from '../plugins/prisma';
+import serviceAccountKey from '../util/Firebase/serviceAccountKey.json';
 import v1 from './v1';
 
 export default async function () {

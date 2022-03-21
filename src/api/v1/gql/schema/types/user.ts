@@ -1,7 +1,10 @@
+import { User as PrismaUser } from '@prisma/client';
 import { intersectIds } from '@util';
 import mercurius from 'mercurius';
-import { objectType, queryField } from 'nexus';
+import { inputObjectType, mutationField, nonNull, objectType, queryField, subscriptionField } from 'nexus';
 import { User } from 'nexus-prisma';
+
+import { topics } from '../../util/interfaces';
 
 const u = User;
 
@@ -28,7 +31,10 @@ export const UserObject = objectType({
     t.field(u.displayName);
     t.field(u.avatar);
     t.field(u.createdAt);
-    t.field(u.lastSeen);
+    t.nonNull.timestamp(u.lastSeen.name, {
+      description: u.lastSeen.description,
+      resolve: u.lastSeen.resolve,
+    });
     t.field(u.disabled);
     t.field(u.servers);
     t.field(u.serverIds);
@@ -40,6 +46,9 @@ export const UserObject = objectType({
   },
 });
 
+/* -------------------------------------------------------------------------- */
+/*                                   Queries                                  */
+/* -------------------------------------------------------------------------- */
 export const userByIdQuery = queryField("userById", {
   type: "User",
   description:
@@ -56,10 +65,7 @@ export const userByIdQuery = queryField("userById", {
       },
     });
     if (!auth.isClient(args.id) && usr) {
-      usr.accountId = "";
-      usr.serverIds = [];
-      usr.groupChatIds = [];
-      usr.friendIds = [];
+      usr = auth.userToPublic(usr);
     }
     if (!usr) throw new mercurius.ErrorWithProps("Invalid ID");
     return usr;
@@ -74,39 +80,12 @@ export const userByNameQuery = queryField("userByName", {
     displayName: u.displayName.type,
   },
   async resolve(_, args, ctx) {
-    const authUser = ctx.auth.user;
-    const prisma = ctx.prisma;
-    let usr: any;
-    if (authUser.displayName !== args.displayName) {
-      usr = await prisma.user.findFirst({
-        where: {
-          displayName: args.displayName,
-        },
-        select: {
-          id: true,
-          displayName: true,
-          avatar: true,
-          disabled: true,
-          createdAt: true,
-          lastSeen: true,
-        },
-      });
-    } else {
-      usr = await prisma.user.findFirst({
-        where: {
-          displayName: args.displayName,
-        },
-      });
-      if (usr && usr.id !== authUser.id) {
-        return {
-          id: usr.id,
-          displayName: usr.displayName,
-          avatar: usr.avatar,
-          disabled: usr.disabled,
-          createdAt: usr.createdAt,
-          lastSeen: usr.lastSeen,
-        };
-      }
+    const auth = ctx.auth;
+    let usr = await ctx.prisma.user.findFirst({
+      where: { displayName: args.displayName },
+    });
+    if (usr && !auth.isClient(usr.id)) {
+      usr = auth.userToPublic(usr);
     }
     if (!usr) throw new mercurius.ErrorWithProps("Invalid name");
     return usr;
@@ -121,13 +100,12 @@ export const userCommonalityQuery = queryField("userCommonality", {
     uid: u.id.type,
   },
   async resolve(_, args, ctx) {
-    const prisma = ctx.prisma;
-
     const usr1 = ctx.auth.user;
-    const usr2 = await prisma.user.findUnique({
+    const usr2 = await ctx.prisma.user.findUnique({
       where: { id: args.uid },
       select: { friendIds: true, serverIds: true },
     });
+
     if (!usr2) {
       throw new mercurius.ErrorWithProps("Invalid ID");
     }
@@ -138,24 +116,66 @@ export const userCommonalityQuery = queryField("userCommonality", {
   },
 });
 
-/*export const userPaginationQuery = queryField("userPagination", {
-  type: nonNull(list("User")),
-  args: {
-    before: stringArg({
-      description: "User UUID to start page before [n-1] (optional)",
-    }),
-    after: stringArg({
-      description: "User UUID to start page after [n+1] (optional)",
-    }),
-    limit: stringArg({ description: "Maximum number of users in a page" }),
+/* -------------------------------------------------------------------------- */
+/*                                  Mutations                                 */
+/* -------------------------------------------------------------------------- */
+export const UserUpdateInput = inputObjectType({
+  name: "UserUpdateInput",
+  definition(t) {
+    t.nullable.string(u.avatar.name, { description: u.avatar.description });
+    t.nullable.string(u.displayName.name, {
+      description: u.displayName.description,
+    });
+    t.nullable.timestamp(u.lastSeen.name, {
+      description: u.lastSeen.description,
+    });
   },
-  async resolve(_, args, ctx) {},
-});*/
-// TODO
-
-/*export const createUser = mutationField("createUser", {
+});
+export const updateUser = mutationField("updateUser", {
   type: "User",
-  async resolve(_, args, ctx) {
-    const pubsub = ctx.pubsub!;
+  description:
+    "Update non-sensitive information of currently logged in user. `lastSeen` will get updated automatically unless a value is provided; if null, does nothing.",
+  args: {
+    data: nonNull(UserUpdateInput),
   },
-});*/
+  async resolve(_, args, ctx) {
+    const { displayName, avatar, lastSeen } = args.data;
+    const client = ctx.auth.user;
+    const data = {
+      displayName: displayName ?? undefined,
+      avatar: avatar ?? undefined,
+      lastSeen: lastSeen === null ? undefined : lastSeen ?? Date.now(), //If null, do nothing. If undefined, get timestamp. Else, set.
+    };
+
+    const user = await ctx.prisma.user.update({
+      where: {
+        id: client.id,
+      },
+      data,
+    });
+
+    ctx.pubsub.publish({
+      topic: topics.userChanged(client.id),
+      payload: data,
+    });
+
+    return user;
+  },
+});
+
+/* -------------------------------------------------------------------------- */
+/*                                Subscriptions                               */
+/* -------------------------------------------------------------------------- */
+export const userChangedSub = subscriptionField("userChanged", {
+  type: "User",
+  description: "Subscribes to changes for a user",
+  args: {
+    uid: u.id.type,
+  },
+  async subscribe(_root, args, ctx, _info) {
+    return await ctx.pubsub.subscribe<PrismaUser>(topics.userChanged(args.uid));
+  },
+  resolve(eventData) {
+    return eventData as PrismaUser;
+  },
+});

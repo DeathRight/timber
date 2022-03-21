@@ -22,6 +22,10 @@ declare global {
      */
     email<FieldName extends string>(fieldName: FieldName, opts?: core.CommonInputFieldConfig<TypeName, FieldName>): void // "EmailAddress";
     /**
+     * The party object of the invite. Either Server, GroupChat, or User (for friend requests)
+     */
+    party<FieldName extends string>(fieldName: FieldName, opts?: core.CommonInputFieldConfig<TypeName, FieldName>): void // "Party";
+    /**
      * The `BigInt` scalar type represents non-fractional signed whole numeric values.
      * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/BigInt
      */
@@ -59,6 +63,10 @@ declare global {
      */
     email<FieldName extends string>(fieldName: FieldName, ...opts: core.ScalarOutSpread<TypeName, FieldName>): void // "EmailAddress";
     /**
+     * The party object of the invite. Either Server, GroupChat, or User (for friend requests)
+     */
+    party<FieldName extends string>(fieldName: FieldName, ...opts: core.ScalarOutSpread<TypeName, FieldName>): void // "Party";
+    /**
      * The `BigInt` scalar type represents non-fractional signed whole numeric values.
      * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/BigInt
      */
@@ -88,9 +96,19 @@ declare global {
 }
 
 export interface NexusGenInputs {
+  InviteCreateInput: { // input type
+    expiresAt?: NexusGenScalars['DateTime'] | null; // DateTime
+    partyId: NexusGenScalars['BigInt']; // BigInt!
+  }
+  UserUpdateInput: { // input type
+    avatar?: string | null; // String
+    displayName?: string | null; // String
+    lastSeen?: NexusGenScalars['Timestamp'] | null; // Timestamp
+  }
 }
 
 export interface NexusGenEnums {
+  InviteType: "Friend" | "GroupChat" | "Server"
   Provider: "EMAIL" | "GITHUB" | "GOOGLE" | "TWITTER"
 }
 
@@ -142,6 +160,13 @@ export interface NexusGenObjects {
     updatedAt: NexusGenScalars['DateTime']; // DateTime!
     userIds: NexusGenScalars['BigInt'][]; // [BigInt!]!
   }
+  Invite: { // root type
+    expiresAt?: NexusGenScalars['DateTime'] | null; // DateTime
+    id: NexusGenScalars['BigInt']; // BigInt!
+    partyId: NexusGenScalars['BigInt']; // BigInt!
+    type: NexusGenEnums['InviteType']; // InviteType!
+  }
+  Mutation: {};
   Query: {};
   Room: { // root type
     createdAt: NexusGenScalars['DateTime']; // DateTime!
@@ -163,6 +188,7 @@ export interface NexusGenObjects {
     updatedAt: NexusGenScalars['DateTime']; // DateTime!
     userIds: NexusGenScalars['BigInt'][]; // [BigInt!]!
   }
+  Subscription: {};
   User: { // root type
     accountId: string; // String!
     avatar?: string | null; // String
@@ -172,7 +198,7 @@ export interface NexusGenObjects {
     friendIds: NexusGenScalars['BigInt'][]; // [BigInt!]!
     groupChatIds: NexusGenScalars['BigInt'][]; // [BigInt!]!
     id: NexusGenScalars['BigInt']; // BigInt!
-    lastSeen: number; // Int!
+    lastSeen: NexusGenScalars['Timestamp']; // Timestamp!
     serverIds: NexusGenScalars['BigInt'][]; // [BigInt!]!
     updatedAt: NexusGenScalars['DateTime']; // DateTime!
   }
@@ -182,9 +208,10 @@ export interface NexusGenInterfaces {
 }
 
 export interface NexusGenUnions {
+  Party: NexusGenRootTypes['GroupChat'] | NexusGenRootTypes['Server'] | NexusGenRootTypes['User'];
 }
 
-export type NexusGenRootTypes = NexusGenObjects
+export type NexusGenRootTypes = NexusGenObjects & NexusGenUnions
 
 export type NexusGenAllTypes = NexusGenRootTypes & NexusGenScalars & NexusGenEnums
 
@@ -224,6 +251,17 @@ export interface NexusGenFieldTypes {
     userIds: NexusGenScalars['BigInt'][]; // [BigInt!]!
     users: NexusGenRootTypes['User'][]; // [User!]!
   }
+  Invite: { // field return type
+    expiresAt: NexusGenScalars['DateTime'] | null; // DateTime
+    id: NexusGenScalars['BigInt']; // BigInt!
+    party: NexusGenRootTypes['Party'] | null; // Party
+    partyId: NexusGenScalars['BigInt']; // BigInt!
+    type: NexusGenEnums['InviteType']; // InviteType!
+  }
+  Mutation: { // field return type
+    createServerInvite: NexusGenRootTypes['Invite'] | null; // Invite
+    updateUser: NexusGenRootTypes['User'] | null; // User
+  }
   Query: { // field return type
     serverById: NexusGenRootTypes['Server'] | null; // Server
     userById: NexusGenRootTypes['User'] | null; // User
@@ -254,6 +292,9 @@ export interface NexusGenFieldTypes {
     userIds: NexusGenScalars['BigInt'][]; // [BigInt!]!
     users: NexusGenRootTypes['User'][]; // [User!]!
   }
+  Subscription: { // field return type
+    userChanged: NexusGenRootTypes['User'] | null; // User
+  }
   User: { // field return type
     account: NexusGenRootTypes['Account']; // Account!
     accountId: string; // String!
@@ -265,7 +306,7 @@ export interface NexusGenFieldTypes {
     groupChatIds: NexusGenScalars['BigInt'][]; // [BigInt!]!
     groupChats: NexusGenRootTypes['GroupChat'][]; // [GroupChat!]!
     id: NexusGenScalars['BigInt']; // BigInt!
-    lastSeen: number; // Int!
+    lastSeen: NexusGenScalars['Timestamp']; // Timestamp!
     ownedServers: NexusGenRootTypes['Server'][]; // [Server!]!
     serverIds: NexusGenScalars['BigInt'][]; // [BigInt!]!
     servers: NexusGenRootTypes['Server'][]; // [Server!]!
@@ -309,6 +350,17 @@ export interface NexusGenFieldTypeNames {
     userIds: 'BigInt'
     users: 'User'
   }
+  Invite: { // field return type name
+    expiresAt: 'DateTime'
+    id: 'BigInt'
+    party: 'Party'
+    partyId: 'BigInt'
+    type: 'InviteType'
+  }
+  Mutation: { // field return type name
+    createServerInvite: 'Invite'
+    updateUser: 'User'
+  }
   Query: { // field return type name
     serverById: 'Server'
     userById: 'User'
@@ -339,6 +391,9 @@ export interface NexusGenFieldTypeNames {
     userIds: 'BigInt'
     users: 'User'
   }
+  Subscription: { // field return type name
+    userChanged: 'User'
+  }
   User: { // field return type name
     account: 'Account'
     accountId: 'String'
@@ -350,7 +405,7 @@ export interface NexusGenFieldTypeNames {
     groupChatIds: 'BigInt'
     groupChats: 'GroupChat'
     id: 'BigInt'
-    lastSeen: 'Int'
+    lastSeen: 'Timestamp'
     ownedServers: 'Server'
     serverIds: 'BigInt'
     servers: 'Server'
@@ -359,6 +414,14 @@ export interface NexusGenFieldTypeNames {
 }
 
 export interface NexusGenArgTypes {
+  Mutation: {
+    createServerInvite: { // args
+      data: NexusGenInputs['InviteCreateInput']; // InviteCreateInput!
+    }
+    updateUser: { // args
+      data: NexusGenInputs['UserUpdateInput']; // UserUpdateInput!
+    }
+  }
   Query: {
     serverById: { // args
       id: NexusGenScalars['BigInt']; // BigInt!
@@ -373,9 +436,15 @@ export interface NexusGenArgTypes {
       uid: NexusGenScalars['BigInt']; // BigInt!
     }
   }
+  Subscription: {
+    userChanged: { // args
+      uid: NexusGenScalars['BigInt']; // BigInt!
+    }
+  }
 }
 
 export interface NexusGenAbstractTypeMembers {
+  Party: "GroupChat" | "Server" | "User"
 }
 
 export interface NexusGenTypeInterfaces {
@@ -383,7 +452,7 @@ export interface NexusGenTypeInterfaces {
 
 export type NexusGenObjectNames = keyof NexusGenObjects;
 
-export type NexusGenInputNames = never;
+export type NexusGenInputNames = keyof NexusGenInputs;
 
 export type NexusGenEnumNames = keyof NexusGenEnums;
 
@@ -391,7 +460,7 @@ export type NexusGenInterfaceNames = never;
 
 export type NexusGenScalarNames = keyof NexusGenScalars;
 
-export type NexusGenUnionNames = never;
+export type NexusGenUnionNames = keyof NexusGenUnions;
 
 export type NexusGenObjectsUsingAbstractStrategyIsTypeOf = never;
 

@@ -1,3 +1,7 @@
+import { simpleflake } from 'simpleflakes';
+
+import { epoch } from './constants';
+
 export const StringIsNumber = (value: any) => isNaN(Number(value)) === false;
 
 export function EnumToObject(e: any) {
@@ -21,4 +25,8 @@ export function intersectIds(a: BigInt[], b: BigInt[]) {
     }
     return result;
   } else return [];
+}
+
+export function timberflake() {
+  return simpleflake(undefined, undefined, epoch);
 }

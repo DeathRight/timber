@@ -114,10 +114,54 @@ type GroupChat {
   users: [User!]!
 }
 
+type Invite {
+  """Expiration ISO date"""
+  expiresAt: DateTime
+
+  """Snowflake (simpleflake) based BigInt ID"""
+  id: BigInt!
+  party: Party
+
+  """ID of what the invite is for"""
+  partyId: BigInt!
+
+  """Invite enum"""
+  type: InviteType!
+}
+
+input InviteCreateInput {
+  """Expiration ISO date"""
+  expiresAt: DateTime
+
+  """ID of what the invite is for"""
+  partyId: BigInt!
+}
+
+enum InviteType {
+  Friend
+  GroupChat
+  Server
+}
+
 """
 The `JSONObject` scalar type represents JSON objects as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf).
 """
 scalar Json @specifiedBy(url: "http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf")
+
+type Mutation {
+  """Creates a server invite with optional expiration date"""
+  createServerInvite(data: InviteCreateInput!): Invite
+
+  """
+  Update non-sensitive information of currently logged in user. `lastSeen` will get updated automatically unless a value is provided; if null, does nothing.
+  """
+  updateUser(data: UserUpdateInput!): User
+}
+
+"""
+The party object of the invite. Either Server, GroupChat, or User (for friend requests)
+"""
+union Party = GroupChat | Server | User
 
 enum Provider {
   EMAIL
@@ -210,6 +254,11 @@ type Server {
   users: [User!]!
 }
 
+type Subscription {
+  """Subscribes to changes for a user"""
+  userChanged(uid: BigInt!): User
+}
+
 """
 The javascript `Date` as integer. Type represents date and time as number of milliseconds from start of UNIX epoch.
 """
@@ -245,7 +294,7 @@ type User {
   id: BigInt!
 
   """Timestamp in milliseconds since epoch the user was last active"""
-  lastSeen: Int!
+  lastSeen: Timestamp!
 
   """Prisma client relation to servers user owns"""
   ownedServers: [Server!]!
@@ -258,4 +307,15 @@ type User {
 
   """ISO date this row was last updated"""
   updatedAt: DateTime!
+}
+
+input UserUpdateInput {
+  """URL for user's avatar"""
+  avatar: String
+
+  """Global display name"""
+  displayName: String
+
+  """Timestamp in milliseconds since epoch the user was last active"""
+  lastSeen: Timestamp
 }
