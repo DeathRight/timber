@@ -28,5 +28,5 @@ export function intersectIds(a: BigInt[], b: BigInt[]) {
 }
 
 export function timberflake() {
-  return simpleflake(undefined, undefined, epoch);
+  return simpleflake(undefined, undefined, epoch) as bigint;
 }

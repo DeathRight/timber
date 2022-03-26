@@ -100,6 +100,10 @@ export interface NexusGenInputs {
     expiresAt?: NexusGenScalars['DateTime'] | null; // DateTime
     partyId: NexusGenScalars['BigInt']; // BigInt!
   }
+  UserCreateInput: { // input type
+    avatar?: string | null; // String
+    displayName: string; // String!
+  }
   UserUpdateInput: { // input type
     avatar?: string | null; // String
     displayName?: string | null; // String
@@ -260,6 +264,7 @@ export interface NexusGenFieldTypes {
   }
   Mutation: { // field return type
     createServerInvite: NexusGenRootTypes['Invite'] | null; // Invite
+    createUser: NexusGenRootTypes['User'] | null; // User
     updateUser: NexusGenRootTypes['User'] | null; // User
   }
   Query: { // field return type
@@ -359,6 +364,7 @@ export interface NexusGenFieldTypeNames {
   }
   Mutation: { // field return type name
     createServerInvite: 'Invite'
+    createUser: 'User'
     updateUser: 'User'
   }
   Query: { // field return type name
@@ -417,6 +423,9 @@ export interface NexusGenArgTypes {
   Mutation: {
     createServerInvite: { // args
       data: NexusGenInputs['InviteCreateInput']; // InviteCreateInput!
+    }
+    createUser: { // args
+      data: NexusGenInputs['UserCreateInput']; // UserCreateInput!
     }
     updateUser: { // args
       data: NexusGenInputs['UserUpdateInput']; // UserUpdateInput!

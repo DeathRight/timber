@@ -152,6 +152,9 @@ type Mutation {
   """Creates a server invite with optional expiration date"""
   createServerInvite(data: InviteCreateInput!): Invite
 
+  """Create user on currently logged in account."""
+  createUser(data: UserCreateInput!): User
+
   """
   Update non-sensitive information of currently logged in user. `lastSeen` will get updated automatically unless a value is provided; if null, does nothing.
   """
@@ -307,6 +310,14 @@ type User {
 
   """ISO date this row was last updated"""
   updatedAt: DateTime!
+}
+
+input UserCreateInput {
+  """URL for user's avatar"""
+  avatar: String
+
+  """Global display name"""
+  displayName: String!
 }
 
 input UserUpdateInput {

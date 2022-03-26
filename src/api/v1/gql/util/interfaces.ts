@@ -16,7 +16,8 @@ export interface PageResult<T = any> {
 }
 
 export const topics = {
-  userChanged: (uid: bigint) => `USER:CHANGED:${uid.toString()}`,
-  userCreated: () => `ACCOUNT:USER:CREATED`,
-  accountChanged: (aid: string) => `ACCOUNT:CHANGED:${aid}`,
+  userChanged: (uid: bigint) => `USER:${uid.toString()}:CHANGED`,
+  userCreated: (aid: string, uid: bigint) =>
+    `ACCOUNT:${aid}:USER:CREATED:${uid.toString()}`,
+  accountChanged: (aid: string) => `ACCOUNT:${aid}:CHANGED`,
 };
