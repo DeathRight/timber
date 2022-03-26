@@ -27,6 +27,20 @@ export function intersectIds(a: BigInt[], b: BigInt[]) {
   } else return [];
 }
 
+/**
+ * Iterates over all keys of `obj2` and if the values are not null or undefined, overwrites/adds them in `obj1`
+ */
+export function assignIfDefined<T extends Record<any, any>>(
+  obj1: T,
+  obj2: Partial<T>
+) {
+  let ret: Record<any, any> = obj1;
+  for (const key in obj2) {
+    ret[key] = obj2[key] != null ? obj2[key] : obj1[key];
+  }
+  return ret as T;
+}
+
 export function timberflake() {
   return simpleflake(undefined, undefined, epoch) as bigint;
 }

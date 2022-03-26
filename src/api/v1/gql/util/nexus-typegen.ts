@@ -100,6 +100,18 @@ export interface NexusGenInputs {
     expiresAt?: NexusGenScalars['DateTime'] | null; // DateTime
     partyId: NexusGenScalars['BigInt']; // BigInt!
   }
+  ServerCreateInput: { // input type
+    description?: string | null; // String
+    displayName: string; // String!
+    start: string; // String!
+    thumbnail?: string | null; // String
+  }
+  ServerUpdateInput: { // input type
+    description?: string | null; // String
+    displayName?: string | null; // String
+    start?: string | null; // String
+    thumbnail?: string | null; // String
+  }
   UserCreateInput: { // input type
     avatar?: string | null; // String
     displayName: string; // String!
@@ -263,8 +275,10 @@ export interface NexusGenFieldTypes {
     type: NexusGenEnums['InviteType']; // InviteType!
   }
   Mutation: { // field return type
+    createServer: NexusGenRootTypes['Server'] | null; // Server
     createServerInvite: NexusGenRootTypes['Invite'] | null; // Invite
     createUser: NexusGenRootTypes['User'] | null; // User
+    updateServer: NexusGenRootTypes['Server'] | null; // Server
     updateUser: NexusGenRootTypes['User'] | null; // User
   }
   Query: { // field return type
@@ -298,7 +312,8 @@ export interface NexusGenFieldTypes {
     users: NexusGenRootTypes['User'][]; // [User!]!
   }
   Subscription: { // field return type
-    userChanged: NexusGenRootTypes['User'] | null; // User
+    serverSnapshot: NexusGenRootTypes['Server'] | null; // Server
+    userSnapshot: NexusGenRootTypes['User'] | null; // User
   }
   User: { // field return type
     account: NexusGenRootTypes['Account']; // Account!
@@ -363,8 +378,10 @@ export interface NexusGenFieldTypeNames {
     type: 'InviteType'
   }
   Mutation: { // field return type name
+    createServer: 'Server'
     createServerInvite: 'Invite'
     createUser: 'User'
+    updateServer: 'Server'
     updateUser: 'User'
   }
   Query: { // field return type name
@@ -398,7 +415,8 @@ export interface NexusGenFieldTypeNames {
     users: 'User'
   }
   Subscription: { // field return type name
-    userChanged: 'User'
+    serverSnapshot: 'Server'
+    userSnapshot: 'User'
   }
   User: { // field return type name
     account: 'Account'
@@ -421,11 +439,18 @@ export interface NexusGenFieldTypeNames {
 
 export interface NexusGenArgTypes {
   Mutation: {
+    createServer: { // args
+      data: NexusGenInputs['ServerCreateInput']; // ServerCreateInput!
+    }
     createServerInvite: { // args
       data: NexusGenInputs['InviteCreateInput']; // InviteCreateInput!
     }
     createUser: { // args
       data: NexusGenInputs['UserCreateInput']; // UserCreateInput!
+    }
+    updateServer: { // args
+      data: NexusGenInputs['ServerUpdateInput']; // ServerUpdateInput!
+      id: NexusGenScalars['BigInt']; // BigInt!
     }
     updateUser: { // args
       data: NexusGenInputs['UserUpdateInput']; // UserUpdateInput!
@@ -446,7 +471,10 @@ export interface NexusGenArgTypes {
     }
   }
   Subscription: {
-    userChanged: { // args
+    serverSnapshot: { // args
+      id: NexusGenScalars['BigInt']; // BigInt!
+    }
+    userSnapshot: { // args
       uid: NexusGenScalars['BigInt']; // BigInt!
     }
   }

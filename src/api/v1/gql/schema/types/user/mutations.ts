@@ -29,7 +29,7 @@ export const updateUser = mutationField("updateUser", {
 
     const userTopic = topic("User").id(client.id).changed;
     ctx.pubsub.publish({
-      topic: userTopic.label(),
+      topic: userTopic.label,
       payload: userTopic.payload(data),
     });
 
@@ -56,7 +56,7 @@ export const createUser = mutationField("createUser", {
 
     const userTopic = topic("User").id(data.id).created;
     ctx.pubsub.publish({
-      topic: userTopic.label(),
+      topic: userTopic.label,
       payload: userTopic.payload(user),
     });
 
