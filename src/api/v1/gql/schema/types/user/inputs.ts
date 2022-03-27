@@ -5,7 +5,7 @@ import { u } from './constants';
 export const UserUpdateInput = inputObjectType({
   name: "UserUpdateInput",
   definition(t) {
-    t.nullable.string(u.avatar.name, { description: u.avatar.description });
+    t.nullable.url(u.avatar.name, { description: u.avatar.description });
     t.nullable.string(u.displayName.name, {
       description: u.displayName.description,
     });
@@ -19,6 +19,6 @@ export const UserCreateInput = inputObjectType({
   name: "UserCreateInput",
   definition(t) {
     t.field(u.displayName);
-    t.field(u.avatar);
+    t.url(u.avatar.name, { description: u.avatar.description });
   },
 });

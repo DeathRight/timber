@@ -10,7 +10,10 @@ export const UserObject = objectType({
     t.field(u.accountId);
     t.field(u.account);
     t.field(u.displayName);
-    t.field(u.avatar);
+    t.url(u.avatar.name, {
+      description: u.avatar.description,
+      resolve: u.avatar.resolve,
+    });
     t.field(u.createdAt);
     t.nonNull.timestamp(u.lastSeen.name, {
       description: u.lastSeen.description,

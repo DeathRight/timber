@@ -69,7 +69,7 @@ export const createServer = mutationField("createServer", {
     } as Prisma.ServerCreateArgs["data"];
     const server = await ctx.prisma.server.create({
       data: data,
-    });
+    }); //TODO: create default Domain, and in turn, default Room
 
     //Add server to user's serverIds list
     const user = await ctx.prisma.user.update({
@@ -89,9 +89,14 @@ export const createServer = mutationField("createServer", {
       },
     });
 
-    //Update session for updated user
+    //Update session and emit update for changed user
     ctx.req.session.set("user", user);
     ctx.auth.updateUser(user);
+    const userTopic = topic("User").id(client.id).changed;
+    ctx.pubsub.publish({
+      topic: userTopic.label,
+      payload: userTopic.payload(user),
+    });
 
     const serverTopic = topic("Server").id(data.id as bigint).created;
     ctx.pubsub.publish({

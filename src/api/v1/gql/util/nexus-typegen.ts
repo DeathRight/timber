@@ -22,6 +22,10 @@ declare global {
      */
     email<FieldName extends string>(fieldName: FieldName, opts?: core.CommonInputFieldConfig<TypeName, FieldName>): void // "EmailAddress";
     /**
+     * A field whose value conforms to the standard URL format as specified in RFC3986: https://www.ietf.org/rfc/rfc3986.txt.
+     */
+    url<FieldName extends string>(fieldName: FieldName, opts?: core.CommonInputFieldConfig<TypeName, FieldName>): void // "URL";
+    /**
      * The party object of the invite. Either Server, GroupChat, or User (for friend requests)
      */
     party<FieldName extends string>(fieldName: FieldName, opts?: core.CommonInputFieldConfig<TypeName, FieldName>): void // "Party";
@@ -63,6 +67,10 @@ declare global {
      */
     email<FieldName extends string>(fieldName: FieldName, ...opts: core.ScalarOutSpread<TypeName, FieldName>): void // "EmailAddress";
     /**
+     * A field whose value conforms to the standard URL format as specified in RFC3986: https://www.ietf.org/rfc/rfc3986.txt.
+     */
+    url<FieldName extends string>(fieldName: FieldName, ...opts: core.ScalarOutSpread<TypeName, FieldName>): void // "URL";
+    /**
      * The party object of the invite. Either Server, GroupChat, or User (for friend requests)
      */
     party<FieldName extends string>(fieldName: FieldName, ...opts: core.ScalarOutSpread<TypeName, FieldName>): void // "Party";
@@ -96,6 +104,19 @@ declare global {
 }
 
 export interface NexusGenInputs {
+  DomainCreateInput: { // input type
+    description?: string | null; // String
+    displayName: string; // String!
+    serverId: NexusGenScalars['BigInt']; // BigInt!
+    start: string; // String!
+    thumbnail?: NexusGenScalars['URL'] | null; // URL
+  }
+  DomainUpdateInput: { // input type
+    description?: string | null; // String
+    displayName?: string | null; // String
+    start?: string | null; // String
+    thumbnail?: NexusGenScalars['URL'] | null; // URL
+  }
   InviteCreateInput: { // input type
     expiresAt?: NexusGenScalars['DateTime'] | null; // DateTime
     partyId: NexusGenScalars['BigInt']; // BigInt!
@@ -104,20 +125,20 @@ export interface NexusGenInputs {
     description?: string | null; // String
     displayName: string; // String!
     start: string; // String!
-    thumbnail?: string | null; // String
+    thumbnail?: NexusGenScalars['URL'] | null; // URL
   }
   ServerUpdateInput: { // input type
     description?: string | null; // String
     displayName?: string | null; // String
     start?: string | null; // String
-    thumbnail?: string | null; // String
+    thumbnail?: NexusGenScalars['URL'] | null; // URL
   }
   UserCreateInput: { // input type
-    avatar?: string | null; // String
+    avatar?: NexusGenScalars['URL'] | null; // URL
     displayName: string; // String!
   }
   UserUpdateInput: { // input type
-    avatar?: string | null; // String
+    avatar?: NexusGenScalars['URL'] | null; // URL
     displayName?: string | null; // String
     lastSeen?: NexusGenScalars['Timestamp'] | null; // Timestamp
   }
@@ -142,6 +163,7 @@ export interface NexusGenScalars {
   EmailAddress: string
   Json: any
   Timestamp: number
+  URL: string
 }
 
 export interface NexusGenObjects {
@@ -164,7 +186,7 @@ export interface NexusGenObjects {
     roomIds: NexusGenScalars['BigInt'][]; // [BigInt!]!
     serverId: NexusGenScalars['BigInt']; // BigInt!
     start: string; // String!
-    thumbnail?: string | null; // String
+    thumbnail?: NexusGenScalars['URL'] | null; // URL
     updatedAt: NexusGenScalars['DateTime']; // DateTime!
   }
   GroupChat: { // root type
@@ -200,14 +222,14 @@ export interface NexusGenObjects {
     id: NexusGenScalars['BigInt']; // BigInt!
     ownerId: NexusGenScalars['BigInt']; // BigInt!
     start: string; // String!
-    thumbnail?: string | null; // String
+    thumbnail?: NexusGenScalars['URL'] | null; // URL
     updatedAt: NexusGenScalars['DateTime']; // DateTime!
     userIds: NexusGenScalars['BigInt'][]; // [BigInt!]!
   }
   Subscription: {};
   User: { // root type
     accountId: string; // String!
-    avatar?: string | null; // String
+    avatar?: NexusGenScalars['URL'] | null; // URL
     createdAt: NexusGenScalars['DateTime']; // DateTime!
     disabled: boolean; // Boolean!
     displayName: string; // String!
@@ -254,7 +276,7 @@ export interface NexusGenFieldTypes {
     server: NexusGenRootTypes['Server']; // Server!
     serverId: NexusGenScalars['BigInt']; // BigInt!
     start: string; // String!
-    thumbnail: string | null; // String
+    thumbnail: NexusGenScalars['URL'] | null; // URL
     updatedAt: NexusGenScalars['DateTime']; // DateTime!
   }
   GroupChat: { // field return type
@@ -275,13 +297,16 @@ export interface NexusGenFieldTypes {
     type: NexusGenEnums['InviteType']; // InviteType!
   }
   Mutation: { // field return type
+    createDomain: NexusGenRootTypes['Domain'] | null; // Domain
     createServer: NexusGenRootTypes['Server'] | null; // Server
     createServerInvite: NexusGenRootTypes['Invite'] | null; // Invite
     createUser: NexusGenRootTypes['User'] | null; // User
+    updateDomain: NexusGenRootTypes['Domain'] | null; // Domain
     updateServer: NexusGenRootTypes['Server'] | null; // Server
     updateUser: NexusGenRootTypes['User'] | null; // User
   }
   Query: { // field return type
+    domainById: NexusGenRootTypes['Domain'] | null; // Domain
     serverById: NexusGenRootTypes['Server'] | null; // Server
     userById: NexusGenRootTypes['User'] | null; // User
     userByName: NexusGenRootTypes['User'] | null; // User
@@ -306,19 +331,20 @@ export interface NexusGenFieldTypes {
     owner: NexusGenRootTypes['User']; // User!
     ownerId: NexusGenScalars['BigInt']; // BigInt!
     start: string; // String!
-    thumbnail: string | null; // String
+    thumbnail: NexusGenScalars['URL'] | null; // URL
     updatedAt: NexusGenScalars['DateTime']; // DateTime!
     userIds: NexusGenScalars['BigInt'][]; // [BigInt!]!
     users: NexusGenRootTypes['User'][]; // [User!]!
   }
   Subscription: { // field return type
+    domainSnapshot: NexusGenRootTypes['Domain'] | null; // Domain
     serverSnapshot: NexusGenRootTypes['Server'] | null; // Server
     userSnapshot: NexusGenRootTypes['User'] | null; // User
   }
   User: { // field return type
     account: NexusGenRootTypes['Account']; // Account!
     accountId: string; // String!
-    avatar: string | null; // String
+    avatar: NexusGenScalars['URL'] | null; // URL
     createdAt: NexusGenScalars['DateTime']; // DateTime!
     disabled: boolean; // Boolean!
     displayName: string; // String!
@@ -357,7 +383,7 @@ export interface NexusGenFieldTypeNames {
     server: 'Server'
     serverId: 'BigInt'
     start: 'String'
-    thumbnail: 'String'
+    thumbnail: 'URL'
     updatedAt: 'DateTime'
   }
   GroupChat: { // field return type name
@@ -378,13 +404,16 @@ export interface NexusGenFieldTypeNames {
     type: 'InviteType'
   }
   Mutation: { // field return type name
+    createDomain: 'Domain'
     createServer: 'Server'
     createServerInvite: 'Invite'
     createUser: 'User'
+    updateDomain: 'Domain'
     updateServer: 'Server'
     updateUser: 'User'
   }
   Query: { // field return type name
+    domainById: 'Domain'
     serverById: 'Server'
     userById: 'User'
     userByName: 'User'
@@ -409,19 +438,20 @@ export interface NexusGenFieldTypeNames {
     owner: 'User'
     ownerId: 'BigInt'
     start: 'String'
-    thumbnail: 'String'
+    thumbnail: 'URL'
     updatedAt: 'DateTime'
     userIds: 'BigInt'
     users: 'User'
   }
   Subscription: { // field return type name
+    domainSnapshot: 'Domain'
     serverSnapshot: 'Server'
     userSnapshot: 'User'
   }
   User: { // field return type name
     account: 'Account'
     accountId: 'String'
-    avatar: 'String'
+    avatar: 'URL'
     createdAt: 'DateTime'
     disabled: 'Boolean'
     displayName: 'String'
@@ -439,6 +469,9 @@ export interface NexusGenFieldTypeNames {
 
 export interface NexusGenArgTypes {
   Mutation: {
+    createDomain: { // args
+      data: NexusGenInputs['DomainCreateInput']; // DomainCreateInput!
+    }
     createServer: { // args
       data: NexusGenInputs['ServerCreateInput']; // ServerCreateInput!
     }
@@ -447,6 +480,10 @@ export interface NexusGenArgTypes {
     }
     createUser: { // args
       data: NexusGenInputs['UserCreateInput']; // UserCreateInput!
+    }
+    updateDomain: { // args
+      data: NexusGenInputs['DomainUpdateInput']; // DomainUpdateInput!
+      id: NexusGenScalars['BigInt']; // BigInt!
     }
     updateServer: { // args
       data: NexusGenInputs['ServerUpdateInput']; // ServerUpdateInput!
@@ -457,6 +494,9 @@ export interface NexusGenArgTypes {
     }
   }
   Query: {
+    domainById: { // args
+      id: NexusGenScalars['BigInt']; // BigInt!
+    }
     serverById: { // args
       id: NexusGenScalars['BigInt']; // BigInt!
     }
@@ -471,6 +511,9 @@ export interface NexusGenArgTypes {
     }
   }
   Subscription: {
+    domainSnapshot: { // args
+      id: NexusGenScalars['BigInt']; // BigInt!
+    }
     serverSnapshot: { // args
       id: NexusGenScalars['BigInt']; // BigInt!
     }

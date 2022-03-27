@@ -26,7 +26,7 @@ export const serverSnapshotSub = subscriptionField("serverSnapshot", {
     return await topic("Server").id(args.id).changed.snapshot(ser, ctx.pubsub);
   },
   resolve(eventData: PrismaServer, args, ctx) {
-    if (!ctx.auth.isInServer(args.sid)) {
+    if (!ctx.auth.isInServer(args.id)) {
       return ctx.auth.serverToPublic(eventData);
     } else {
       return eventData;

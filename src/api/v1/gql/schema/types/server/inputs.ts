@@ -12,7 +12,7 @@ export const ServerUpdateInput = inputObjectType({
       description: s.displayName.description,
     });
     t.nullable.string(s.start.name, { description: s.start.description });
-    t.nullable.string(s.thumbnail.name, {
+    t.nullable.url(s.thumbnail.name, {
       description: s.thumbnail.description,
     });
   },
@@ -23,7 +23,7 @@ export const ServerCreateInput = inputObjectType({
   definition(t) {
     t.field(s.description);
     t.field(s.displayName);
-    t.field(s.thumbnail);
+    t.url(s.thumbnail.name, { description: s.thumbnail.description });
     t.field(s.start);
   },
 });

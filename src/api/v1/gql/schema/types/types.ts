@@ -1,4 +1,4 @@
-import { EmailAddressResolver, TimestampResolver } from 'graphql-scalars';
+import { EmailAddressResolver, TimestampResolver, URLResolver } from 'graphql-scalars';
 import { asNexusMethod, enumType } from 'nexus';
 import { InviteType, Provider } from 'nexus-prisma';
 
@@ -17,6 +17,8 @@ export const EmailScalar = asNexusMethod(
   "email",
   "string"
 );
+
+export const URLScalar = asNexusMethod(URLResolver, "url", "string");
 
 export const ProviderEnum = enumType(Provider);
 

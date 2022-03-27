@@ -10,7 +10,10 @@ export const ServerObject = objectType({
     t.field(s.displayName);
     t.field(s.description);
     t.field(s.start);
-    t.field(s.thumbnail);
+    t.url(s.thumbnail.name, {
+      description: s.thumbnail.description,
+      resolve: s.thumbnail.resolve,
+    });
     t.field(s.createdAt);
     t.field(s.updatedAt);
     t.field(s.owner);

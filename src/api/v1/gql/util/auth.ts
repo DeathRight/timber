@@ -1,4 +1,4 @@
-import { Account, Server, User } from '@prisma/client';
+import { Account, Domain, Server, User } from '@prisma/client';
 import { DecodedIdToken } from 'firebase-admin/lib/auth/token-verifier';
 
 /*export const authCheck = (ctx: Context) => {
@@ -36,7 +36,31 @@ export class GQLAuth {
    */
   server = (ser: Server) => {
     return {
+      toPublic: () => {
+        ser.userIds &&= [];
+        ser.domainIds &&= [];
+        ser.ownerId &&= BigInt(0);
+        ser.start &&= ""; //TODO: start should be bigint to match domain ID type
+        return ser;
+      },
       canUpdate: () => ser.ownerId === this.user.id,
+      canAddDomains: () => ser.ownerId === this.user.id,
+    };
+  };
+  /**
+   * Permission methods for domains
+   */
+  domain = (dom: Domain) => {
+    return {
+      toPublic: () => {
+        dom.roomIds &&= [];
+        dom.description &&= "";
+        dom.displayName &&= "";
+        dom.start &&= "";
+        return dom;
+      },
+      canUpdate: () => true,
+      canView: () => true,
     };
   };
 
@@ -45,12 +69,13 @@ export class GQLAuth {
    * @param usr User to sanitize
    * @returns User with sensitive information sanitized
    */
-  userToPublic = (usr?: User | null) => {
+  userToPublic = (usr?: User | (User & { servers: Server[] }) | null) => {
     if (!usr) return null;
     usr.accountId &&= "";
     usr.serverIds &&= [];
     usr.groupChatIds &&= [];
     usr.friendIds &&= [];
+    if ((usr as any).servers) (usr as any).servers &&= [];
     return usr;
   };
   /**

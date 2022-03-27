@@ -1,7 +1,7 @@
 import { objectType } from 'nexus';
-import { Domain } from 'nexus-prisma';
 
-const d = Domain;
+import { d } from './constants';
+
 export const DomainObject = objectType({
   name: d.$name,
   description: d.$description,
@@ -12,10 +12,18 @@ export const DomainObject = objectType({
     t.field(d.description);
     t.field(d.displayName);
     t.field(d.start);
-    t.field(d.thumbnail);
+    t.url(d.thumbnail.name, {
+      description: d.thumbnail.description,
+      resolve: d.thumbnail.resolve,
+    });
     t.field(d.createdAt);
     t.field(d.updatedAt);
     t.field(d.roomIds);
     t.field(d.rooms);
   },
 });
+
+export * from "./queries";
+export * from "./inputs";
+export * from "./mutations";
+export * from "./subscriptions";
