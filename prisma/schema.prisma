@@ -80,7 +80,9 @@ model Server {
   /// Description of server
   description String?
   /// Starting domain ID
-  start       String   @default("general")
+  startId     BigInt
+  /// Prisma client relation start domain
+  start       Domain   @relation(fields: [startId], references: [id])
   /// URL for server's thumbnail
   thumbnail   String?
   /// ISO date the server was created at
@@ -113,7 +115,9 @@ model Domain {
   /// Global display name
   displayName String
   /// Starting room ID
-  start       String   @default("general")
+  startId     BigInt
+  /// Prisma client relation start room
+  start       Room     @relation(fields: [startId], references: [id])
   /// URL for domain's thumbnail
   thumbnail   String?
   /// ISO date the domain was created at
@@ -124,6 +128,8 @@ model Domain {
   roomIds     BigInt[]
   /// Prisma client relation to rooms that this domain contains
   rooms       Room[]   @relation("rooms")
+  /// Prisma client relation to indicate they are the start for a server. NEVER use.
+  isStartFor  Server[]
 }
 
 model Room {
@@ -141,6 +147,8 @@ model Room {
   createdAt   DateTime @default(now())
   /// ISO date this row was last updated
   updatedAt   DateTime @updatedAt
+  /// Prisma client relation to indicate they are the start for a domain. NEVER use.
+  isStartFor  Domain[]
 }
 
 model GroupChat {

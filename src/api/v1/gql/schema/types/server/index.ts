@@ -9,6 +9,7 @@ export const ServerObject = objectType({
     t.field(s.id);
     t.field(s.displayName);
     t.field(s.description);
+    t.field(s.startId);
     t.field(s.start);
     t.url(s.thumbnail.name, {
       description: s.thumbnail.description,

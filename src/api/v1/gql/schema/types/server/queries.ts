@@ -10,16 +10,16 @@ export const serverById = queryField("serverById", {
     id: s.id.type,
   },
   async resolve(_, args, ctx) {
-    const prisma = ctx.prisma;
-    const ser = await prisma.server.findUnique({
+    const ser = await ctx.prisma.server.findUnique({
       where: {
         id: args.id,
       },
+      include: { start: true, domains: true, users: true },
     });
     if (!ser) throw new mercurius.ErrorWithProps("Invalid ID");
 
-    if (!ctx.auth.isInServer(args.id)) {
-      return ctx.auth.serverToPublic(ser);
+    if (!ctx.auth.server(args.id).canRead()) {
+      return ctx.auth.server(ser).toPublic();
     } else {
       return ser;
     }

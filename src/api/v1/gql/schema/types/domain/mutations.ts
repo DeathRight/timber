@@ -15,12 +15,12 @@ export const updateDomain = mutationField("updateDomain", {
     data: nonNull(DomainUpdateInput),
   },
   async resolve(_, args, ctx) {
-    const { displayName, description, thumbnail, start } = args.data;
+    const { displayName, description, thumbnail, startId } = args.data;
     const data = {
       displayName: displayName ?? undefined,
       description: description ?? undefined,
       thumbnail: thumbnail ?? undefined,
-      start: start ?? undefined,
+      startId: startId ?? undefined,
     };
 
     if (!ctx.auth.isInServer(args.id))
@@ -54,27 +54,35 @@ export const createDomain = mutationField("createDomain", {
   description: "Creates a domain and updates server to reflect",
   args: { data: nonNull(DomainCreateInput) },
   async resolve(_, args, ctx) {
-    const { serverId, displayName, description, thumbnail, start } = args.data;
+    const { serverId, displayName, description, thumbnail, startName } =
+      args.data;
 
     //Permissions check
+    if (!ctx.auth.server(serverId).canRead())
+      throw new mercurius.ErrorWithProps("Invalid permissions!");
     const oldServer = await ctx.prisma.server.findUnique({
       where: { id: serverId },
     });
     if (!oldServer)
       throw new mercurius.ErrorWithProps("Unable to fetch server");
-    if (!ctx.auth.server(oldServer).canAddDomains())
-      throw new mercurius.ErrorWithProps(
-        "You cannot add domains to this server!"
-      );
+    if (!ctx.auth.server(oldServer).canCreateChild())
+      throw new mercurius.ErrorWithProps("Invalid permissions!");
+    //End check
 
+    //Create Domain with starting Room
+    const startRoom: Prisma.RoomCreateWithoutDomainInput = {
+      id: timberflake(),
+      displayName: startName ?? "general",
+    };
     const data = {
       id: timberflake(),
       displayName: displayName,
       description: description,
       thumbnail: thumbnail,
-      start: start,
       serverId: serverId,
       server: { connect: { id: serverId } },
+      rooms: { create: startRoom },
+      start: { connect: { id: startRoom.id } },
     } as Prisma.DomainCreateArgs["data"];
     const domain = await ctx.prisma.domain.create({
       data: data,
@@ -95,6 +103,7 @@ export const createDomain = mutationField("createDomain", {
       },
     });
 
+    //Publish changes
     const serverTopic = topic("Server").id(serverId).changed;
     ctx.pubsub.publish({
       topic: serverTopic.label,

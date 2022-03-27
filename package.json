@@ -30,7 +30,7 @@
   },
   "homepage": "https://github.com/DeathRight/timber#readme",
   "dependencies": {
-    "@prisma/client": "^3.11.0",
+    "@prisma/client": "^3.11.1",
     "bcrypt": "^5.0.1",
     "dotenv": "^16.0.0",
     "fastify": "^3.27.2",
@@ -62,7 +62,7 @@
     "@types/pg": "^8.6.4",
     "@types/ws": "^8.2.3",
     "nodemon": "^2.0.15",
-    "prisma": "^3.11.0",
+    "prisma": "^3.11.1",
     "regenerator-runtime": "^0.13.9",
     "ts-node": "^10.7.0",
     "tsconfig-paths": "^3.14.0",

@@ -11,7 +11,7 @@ export const ServerUpdateInput = inputObjectType({
     t.nullable.string(s.displayName.name, {
       description: s.displayName.description,
     });
-    t.nullable.string(s.start.name, { description: s.start.description });
+    t.nullable.bigInt(s.startId.name, { description: s.startId.description });
     t.nullable.url(s.thumbnail.name, {
       description: s.thumbnail.description,
     });
@@ -24,6 +24,8 @@ export const ServerCreateInput = inputObjectType({
     t.field(s.description);
     t.field(s.displayName);
     t.url(s.thumbnail.name, { description: s.thumbnail.description });
-    t.field(s.start);
+    t.string("startName", {
+      description: "Display name of first (default) domain",
+    });
   },
 });

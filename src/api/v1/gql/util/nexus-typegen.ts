@@ -108,13 +108,13 @@ export interface NexusGenInputs {
     description?: string | null; // String
     displayName: string; // String!
     serverId: NexusGenScalars['BigInt']; // BigInt!
-    start: string; // String!
+    startName?: string | null; // String
     thumbnail?: NexusGenScalars['URL'] | null; // URL
   }
   DomainUpdateInput: { // input type
     description?: string | null; // String
     displayName?: string | null; // String
-    start?: string | null; // String
+    startId?: NexusGenScalars['BigInt'] | null; // BigInt
     thumbnail?: NexusGenScalars['URL'] | null; // URL
   }
   InviteCreateInput: { // input type
@@ -124,13 +124,13 @@ export interface NexusGenInputs {
   ServerCreateInput: { // input type
     description?: string | null; // String
     displayName: string; // String!
-    start: string; // String!
+    startName?: string | null; // String
     thumbnail?: NexusGenScalars['URL'] | null; // URL
   }
   ServerUpdateInput: { // input type
     description?: string | null; // String
     displayName?: string | null; // String
-    start?: string | null; // String
+    startId?: NexusGenScalars['BigInt'] | null; // BigInt
     thumbnail?: NexusGenScalars['URL'] | null; // URL
   }
   UserCreateInput: { // input type
@@ -185,7 +185,7 @@ export interface NexusGenObjects {
     id: NexusGenScalars['BigInt']; // BigInt!
     roomIds: NexusGenScalars['BigInt'][]; // [BigInt!]!
     serverId: NexusGenScalars['BigInt']; // BigInt!
-    start: string; // String!
+    startId: NexusGenScalars['BigInt']; // BigInt!
     thumbnail?: NexusGenScalars['URL'] | null; // URL
     updatedAt: NexusGenScalars['DateTime']; // DateTime!
   }
@@ -221,7 +221,7 @@ export interface NexusGenObjects {
     domainIds: NexusGenScalars['BigInt'][]; // [BigInt!]!
     id: NexusGenScalars['BigInt']; // BigInt!
     ownerId: NexusGenScalars['BigInt']; // BigInt!
-    start: string; // String!
+    startId: NexusGenScalars['BigInt']; // BigInt!
     thumbnail?: NexusGenScalars['URL'] | null; // URL
     updatedAt: NexusGenScalars['DateTime']; // DateTime!
     userIds: NexusGenScalars['BigInt'][]; // [BigInt!]!
@@ -275,7 +275,8 @@ export interface NexusGenFieldTypes {
     rooms: NexusGenRootTypes['Room'][]; // [Room!]!
     server: NexusGenRootTypes['Server']; // Server!
     serverId: NexusGenScalars['BigInt']; // BigInt!
-    start: string; // String!
+    start: NexusGenRootTypes['Room']; // Room!
+    startId: NexusGenScalars['BigInt']; // BigInt!
     thumbnail: NexusGenScalars['URL'] | null; // URL
     updatedAt: NexusGenScalars['DateTime']; // DateTime!
   }
@@ -330,7 +331,8 @@ export interface NexusGenFieldTypes {
     id: NexusGenScalars['BigInt']; // BigInt!
     owner: NexusGenRootTypes['User']; // User!
     ownerId: NexusGenScalars['BigInt']; // BigInt!
-    start: string; // String!
+    start: NexusGenRootTypes['Domain']; // Domain!
+    startId: NexusGenScalars['BigInt']; // BigInt!
     thumbnail: NexusGenScalars['URL'] | null; // URL
     updatedAt: NexusGenScalars['DateTime']; // DateTime!
     userIds: NexusGenScalars['BigInt'][]; // [BigInt!]!
@@ -382,7 +384,8 @@ export interface NexusGenFieldTypeNames {
     rooms: 'Room'
     server: 'Server'
     serverId: 'BigInt'
-    start: 'String'
+    start: 'Room'
+    startId: 'BigInt'
     thumbnail: 'URL'
     updatedAt: 'DateTime'
   }
@@ -437,7 +440,8 @@ export interface NexusGenFieldTypeNames {
     id: 'BigInt'
     owner: 'User'
     ownerId: 'BigInt'
-    start: 'String'
+    start: 'Domain'
+    startId: 'BigInt'
     thumbnail: 'URL'
     updatedAt: 'DateTime'
     userIds: 'BigInt'

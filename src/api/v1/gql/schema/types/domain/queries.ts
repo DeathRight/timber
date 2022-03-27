@@ -10,18 +10,15 @@ export const domainById = queryField("domainById", {
     id: d.id.type,
   },
   async resolve(_, args, ctx) {
-    const prisma = ctx.prisma;
-    const dom = await prisma.domain.findUnique({
-      where: {
-        id: args.id,
-      },
-    });
-    if (!dom) throw new mercurius.ErrorWithProps("Invalid ID");
-
-    const authDom = ctx.auth.domain(dom);
-    if (!authDom.canView()) {
-      return authDom.toPublic();
+    const authDom = ctx.auth.domain(args.id);
+    if (!authDom.canRead()) {
+      throw new mercurius.ErrorWithProps("Invalid permissions!");
     } else {
+      const dom = await ctx.prisma.domain.findUnique({
+        where: { id: args.id },
+        include: { server: true, rooms: true },
+      });
+      if (!dom) throw new mercurius.ErrorWithProps("Invalid ID!");
       return dom;
     }
   },

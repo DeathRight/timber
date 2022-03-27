@@ -16,6 +16,7 @@ export const domainSnapshotSub = subscriptionField("domainSnapshot", {
       where: {
         id: args.id,
       },
+      include: { server: true, start: true, rooms: true },
     });
     if (!dom) {
       throw new mercurius.ErrorWithProps(
@@ -27,7 +28,7 @@ export const domainSnapshotSub = subscriptionField("domainSnapshot", {
   },
   resolve(eventData: PrismaDomain, args, ctx) {
     const authDom = ctx.auth.domain(eventData);
-    if (!authDom.canView()) {
+    if (!authDom.canRead()) {
       return authDom.toPublic();
     } else {
       return eventData;

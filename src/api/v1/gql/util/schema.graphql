@@ -73,8 +73,11 @@ type Domain {
   """ID of server that contains this domain"""
   serverId: BigInt!
 
+  """Prisma client relation start room"""
+  start: Room!
+
   """Starting room ID"""
-  start: String!
+  startId: BigInt!
 
   """URL for domain's thumbnail"""
   thumbnail: URL
@@ -93,8 +96,8 @@ input DomainCreateInput {
   """ID of server that contains this domain"""
   serverId: BigInt!
 
-  """Starting room ID"""
-  start: String!
+  """Display name of first (default) room"""
+  startName: String
 
   """URL for domain's thumbnail"""
   thumbnail: URL
@@ -108,7 +111,7 @@ input DomainUpdateInput {
   displayName: String
 
   """Starting room ID"""
-  start: String
+  startId: BigInt
 
   """URL for domain's thumbnail"""
   thumbnail: URL
@@ -287,8 +290,11 @@ type Server {
   """User ID of the owner"""
   ownerId: BigInt!
 
+  """Prisma client relation start domain"""
+  start: Domain!
+
   """Starting domain ID"""
-  start: String!
+  startId: BigInt!
 
   """URL for server's thumbnail"""
   thumbnail: URL
@@ -310,8 +316,8 @@ input ServerCreateInput {
   """Global display name"""
   displayName: String!
 
-  """Starting domain ID"""
-  start: String!
+  """Display name of first (default) domain"""
+  startName: String
 
   """URL for server's thumbnail"""
   thumbnail: URL
@@ -325,7 +331,7 @@ input ServerUpdateInput {
   displayName: String
 
   """Starting domain ID"""
-  start: String
+  startId: BigInt
 
   """URL for server's thumbnail"""
   thumbnail: URL

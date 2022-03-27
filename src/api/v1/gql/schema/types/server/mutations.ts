@@ -15,12 +15,12 @@ export const updateServer = mutationField("updateServer", {
     data: nonNull(ServerUpdateInput),
   },
   async resolve(_, args, ctx) {
-    const { displayName, description, thumbnail, start } = args.data;
+    const { displayName, description, thumbnail, startId } = args.data;
     const data = {
       displayName: displayName ?? undefined,
       description: description ?? undefined,
       thumbnail: thumbnail ?? undefined,
-      start: start ?? undefined,
+      startId: startId ?? undefined,
     };
 
     if (!ctx.auth.isInServer(args.id))
@@ -37,6 +37,7 @@ export const updateServer = mutationField("updateServer", {
         id: args.id,
       },
       data,
+      include: { start: true, domains: true, users: true },
     });
 
     const serverTopic = topic("Server").id(args.id).changed;
@@ -55,21 +56,33 @@ export const createServer = mutationField("createServer", {
   args: { data: nonNull(ServerCreateInput) },
   async resolve(_, args, ctx) {
     const client = ctx.auth.user;
-    const { displayName, description, thumbnail, start } = args.data;
+    const { displayName, description, thumbnail, startName } = args.data;
 
+    //Create starting domain and room
+    const startRoom: Prisma.RoomCreateWithoutDomainInput = {
+      id: timberflake(),
+      displayName: "general",
+    };
+    const startDomain: Prisma.DomainCreateWithoutServerInput = {
+      id: timberflake(),
+      displayName: startName ?? "general",
+      rooms: { create: startRoom },
+      start: { connect: { id: startRoom.id } },
+    };
+    //Create server
     const data = {
       id: timberflake(),
-      ownerId: client.id,
+      owner: { connect: { id: client.id } },
       displayName: displayName,
       description: description,
       thumbnail: thumbnail,
-      start: start,
-      userIds: [client.id],
+      domains: { create: startDomain },
+      start: { connect: { id: startDomain.id } },
       users: { connect: { id: client.id } },
     } as Prisma.ServerCreateArgs["data"];
     const server = await ctx.prisma.server.create({
       data: data,
-    }); //TODO: create default Domain, and in turn, default Room
+    });
 
     //Add server to user's serverIds list
     const user = await ctx.prisma.user.update({

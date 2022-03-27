@@ -11,6 +11,7 @@ export const DomainObject = objectType({
     t.field(d.server);
     t.field(d.description);
     t.field(d.displayName);
+    t.field(d.startId);
     t.field(d.start);
     t.url(d.thumbnail.name, {
       description: d.thumbnail.description,
