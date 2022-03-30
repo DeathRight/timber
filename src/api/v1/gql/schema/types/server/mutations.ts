@@ -27,6 +27,7 @@ export const updateServer = mutationField("updateServer", {
       throw new mercurius.ErrorWithProps("You are not in this server!");
     const server = await ctx.prisma.server.findUnique({
       where: { id: args.id },
+      include: { users: { select: { id: true } } },
     });
     if (!server) throw new mercurius.ErrorWithProps("Unable to fetch server");
     if (!ctx.auth.server(server).canUpdate)
@@ -82,6 +83,7 @@ export const createServer = mutationField("createServer", {
     } as Prisma.ServerCreateArgs["data"];
     const server = await ctx.prisma.server.create({
       data: data,
+      include: { start: true, domains: true, users: true },
     });
 
     //Add server to user's serverIds list
@@ -90,9 +92,6 @@ export const createServer = mutationField("createServer", {
         id: client.id,
       },
       data: {
-        serverIds: {
-          push: server.id,
-        },
         servers: {
           connect: { id: server.id },
         },
@@ -100,6 +99,7 @@ export const createServer = mutationField("createServer", {
           connect: { id: server.id },
         },
       },
+      include: { servers: { select: { id: true } } },
     });
 
     //Update session and emit update for changed user

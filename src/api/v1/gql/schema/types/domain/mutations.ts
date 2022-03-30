@@ -62,6 +62,7 @@ export const createDomain = mutationField("createDomain", {
       throw new mercurius.ErrorWithProps("Invalid permissions!");
     const oldServer = await ctx.prisma.server.findUnique({
       where: { id: serverId },
+      include: { users: { select: { id: true } } },
     });
     if (!oldServer)
       throw new mercurius.ErrorWithProps("Unable to fetch server");

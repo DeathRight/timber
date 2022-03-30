@@ -1,4 +1,4 @@
-import { Account, prisma, User } from '@prisma/client';
+import { Account, prisma } from '@prisma/client';
 import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import fastifySecureSession from 'fastify-secure-session';
 import { readFileSync } from 'fs';
@@ -9,7 +9,7 @@ import { join } from 'path';
 
 import { verifyToken } from './firebase-auth';
 import schemav1 from './gql/schema';
-import { GQLAuth } from './gql/util/auth';
+import { GQLAuth, UserWithServerIds } from './gql/util/auth';
 import { Context } from './gql/util/context';
 import { getAccountFromId } from './gql/util/db/account';
 import { getUserFromAccount } from './gql/util/db/user';
@@ -59,7 +59,7 @@ export default async function (fastify: FastifyInstance, opts: any, done: any) {
     async (schema, document, ctx: Context) => {
       const req = ctx.req;
       const decodedToken = await verifyToken(req);
-      const user = req.session.get("user") as User | undefined;
+      const user = req.session.get("user") as UserWithServerIds | undefined;
       const account = req.session.get("account") as Account | undefined;
 
       if (decodedToken && user && account) {
@@ -90,7 +90,7 @@ export default async function (fastify: FastifyInstance, opts: any, done: any) {
     },
     async (req, reply) => {
       const decodedToken = await verifyToken(req);
-      let user: User | undefined;
+      let user;
       let account: Account | undefined;
 
       if (decodedToken) {

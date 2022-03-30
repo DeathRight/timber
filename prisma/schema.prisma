@@ -42,65 +42,162 @@ model Account {
 
 model User {
   /// Snowflake (simpleflake) based BigInt ID
-  id           BigInt      @id
-  /// Prisma client relation to account connected to user
-  account      Account     @relation(fields: [accountId], references: [id])
+  id              BigInt       @id
+  /// Relation to account connected to user
+  account         Account      @relation(fields: [accountId], references: [id])
   /// Account ID that this user is connected to
-  accountId    String
+  accountId       String
   /// Global display name
-  displayName  String
+  displayName     String
   /// URL for user's avatar
-  avatar       String?
-  createdAt    DateTime    @default(now())
+  avatar          String?
+  createdAt       DateTime     @default(now())
   /// Timestamp in milliseconds since epoch the user was last active
-  lastSeen     Int
+  lastSeen        Int
   /// Whether user is globally disabled
-  disabled     Boolean     @default(false)
-  /// Prisma client relation to servers user is a member of
-  servers      Server[]    @relation("servers")
-  /// Array of server IDs the user is a member of
-  serverIds    BigInt[]
-  /// Array of user IDs the user is friends with
-  friendIds    BigInt[]
-  /// Array of GroupChat IDs for group chats the user is a member of
-  groupChatIds BigInt[]
-  /// Prisma client relation to group chat's the user is a member of
-  groupChats   GroupChat[] @relation("groupChats")
+  disabled        Boolean      @default(false)
+  /// Relation to servers user is a member of
+  servers         Server[]     @relation("servers")
+  /// Relation to friends of user
+  friends         User[]       @relation("friends")
+  /// Necessary for prisma client relation. NEVER use.
+  friendRelation  User[]       @relation("friends") @ignore
+  /// Relation to group chats the user is a member of
+  groupChats      GroupChat[]  @relation("groupChats", references: [id])
+  /// Relation to group chats the user owns
+  ownedGroupChats GroupChat[]
   /// ISO date this row was last updated
-  updatedAt    DateTime    @updatedAt
-  /// Prisma client relation to servers user owns
-  ownedServers Server[]    @relation("ownedServers")
+  updatedAt       DateTime     @updatedAt
+  /// Relation to servers user owns
+  ownedServers    Server[]     @relation("ownedServers")
+  /// Associated serverUsers for every server
+  serverUsers     ServerUser[]
+
+  /// Array of server IDs the user is a member of
+  //serverIds    BigInt[]
+  /// Array of user IDs the user is friends with
+  //friendIds    BigInt[]
+  /// Array of GroupChat IDs for group chats the user is a member of
+  //groupChatIds BigInt[]
+
+}
+
+enum Permission {
+  /// Can create resource
+  CREATE
+  /// Can read resource
+  READ
+  /// Can update resource
+  UPDATE
+  /// Can delete resource
+  DELETE
+}
+
+enum DetailPermission {
+  /// Can change name
+  NAME
+  /// Can change description
+  DESCRIPTION
+  /// Can change thumbnail
+  THUMBNAIL
+}
+
+enum ModPermission {
+  /// Can invite
+  INVITE
+  /// Can ban/unban
+  BAN
+  /// Can mute/unmute
+  MUTE
+  /// Can delete messages
+  DELETE
+  /// Can edit messages
+  EDIT
+  /// Can alter roles
+  ROLE
+}
+
+model Role {
+  /// Snowflake (simpleflake) based BigInt ID
+  id            BigInt             @id
+  /// ID of associated server
+  serverId      BigInt
+  /// Relation to associated server
+  server        Server             @relation(fields: [serverId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  /// Relation to serverUsers that are members of this role
+  members       ServerUser[]       @relation("members")
+  /// Place in role hierarchy, descending. 1st cannot be touched by 2nd, and so on. Must be unique across servers
+  order         Int                @default(autoincrement()) @db.SmallInt
+  /// Full permissions (except delete server) and 2nd in hierarchy
+  admin         Boolean            @default(false)
+  /// Server Details permissions
+  serverDetails DetailPermission[]
+  /// Global domain CRUD permissions
+  domainCrud    Permission[]
+  /// Global domain Details permissions
+  domainDetails DetailPermission[]
+  /// Global room CRUD permissions
+  roomCrud      Permission[]
+  /// Global room Details permissions
+  roomDetails   DetailPermission[]
+  /// User moderation permissions
+  modPerms      ModPermission[]
+
+  @@unique([serverId, order])
+}
+
+model ServerUser {
+  /// Snowflake (simpleflake) based BigInt ID
+  id       BigInt @id
+  /// ID of the base user
+  userId   BigInt
+  /// ID of the associated server
+  serverId BigInt
+
+  /// Relation to base user
+  user        User    @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  /// Relation to associated server
+  server      Server  @relation(fields: [serverId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  /// Server-specific displayName, if not defined or empty, will use the base User displayName
+  displayName String?
+  /// Relation to roles this ServerUser is a member of
+  roles       Role[]  @relation("members")
+  @@unique([userId, serverId])
 }
 
 model Server {
   /// Snowflake (simpleflake) based BigInt ID
-  id          BigInt   @id
+  id          BigInt       @id
   /// Global display name
   displayName String
   /// Description of server
   description String?
   /// Starting domain ID
-  startId     BigInt
-  /// Prisma client relation start domain
-  start       Domain   @relation(fields: [startId], references: [id])
+  startId     BigInt       @unique
+  /// Relation to start domain
+  start       Domain       @relation("isStartDomainForServer", fields: [startId], references: [id])
   /// URL for server's thumbnail
   thumbnail   String?
   /// ISO date the server was created at
-  createdAt   DateTime @default(now())
+  createdAt   DateTime     @default(now())
   /// ISO date this row was last updated
-  updatedAt   DateTime @updatedAt
-  /// Prisma client relation to user that owns the server
-  owner       User     @relation("ownedServers", fields: [ownerId], references: [id])
+  updatedAt   DateTime     @updatedAt
+  /// Relation to user that owns the server
+  owner       User         @relation("ownedServers", fields: [ownerId], references: [id])
   /// User ID of the owner
   ownerId     BigInt
-  /// Prisma client relation to users who are members of this server
-  users       User[]   @relation("servers", references: [id])
+  /// Relation to users who are members of this server
+  users       User[]       @relation("servers", references: [id])
   /// Array of user IDs that are members of this server
-  userIds     BigInt[]
+  //userIds     BigInt[]
   /// Array of domain IDs that this server contains
-  domainIds   BigInt[]
-  /// Prisma client relation to domains that this server contains
-  domains     Domain[] @relation("domains")
+  //domainIds   BigInt[]
+  /// Relation to domains that this server contains
+  domains     Domain[]     @relation("domains")
+  /// Relation to server's serverUsers
+  serverUsers ServerUser[]
+  /// Relation to server's roles
+  roles       Role[]
 }
 
 model Domain {
@@ -110,14 +207,10 @@ model Domain {
   serverId    BigInt
   /// Description of domain
   description String?
-  /// Prisma client relation to server that contains this domain
-  server      Server   @relation("domains", fields: [serverId], references: [id])
+  /// Relation to server that contains this domain
+  server      Server   @relation("domains", fields: [serverId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   /// Global display name
   displayName String
-  /// Starting room ID
-  startId     BigInt
-  /// Prisma client relation start room
-  start       Room     @relation(fields: [startId], references: [id])
   /// URL for domain's thumbnail
   thumbnail   String?
   /// ISO date the domain was created at
@@ -125,30 +218,35 @@ model Domain {
   /// ISO date this row was last updated
   updatedAt   DateTime @updatedAt
   /// Array of room ids that this domain contains
-  roomIds     BigInt[]
-  /// Prisma client relation to rooms that this domain contains
+  //roomIds     BigInt[]
+  /// Relation to rooms that this domain contains
   rooms       Room[]   @relation("rooms")
-  /// Prisma client relation to indicate they are the start for a server. NEVER use.
-  isStartFor  Server[]
+
+  /// Starting room ID
+  startId                BigInt  @unique
+  /// Relation start room
+  start                  Room    @relation("isStartRoomForDomain", fields: [startId], references: [id])
+  /// Relation to indicate they are the start for a server. NEVER use.
+  isStartDomainForServer Server? @relation("isStartDomainForServer") @ignore
 }
 
 model Room {
   /// Snowflake (simpleflake) based BigInt ID
-  id          BigInt   @id
+  id                   BigInt   @id
   /// ID of domain that contains this room
-  domainId    BigInt
-  /// Prisma client relation to domain that contains this room
-  domain      Domain   @relation("rooms", fields: [domainId], references: [id])
+  domainId             BigInt
+  /// Relation to domain that contains this room
+  domain               Domain   @relation("rooms", fields: [domainId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   /// Global display name
-  displayName String
+  displayName          String
   /// URL for room's thumbnail
-  thumbnail   String?
+  thumbnail            String?
   /// ISO date the room was created at
-  createdAt   DateTime @default(now())
+  createdAt            DateTime @default(now())
   /// ISO date this row was last updated
-  updatedAt   DateTime @updatedAt
-  /// Prisma client relation to indicate they are the start for a domain. NEVER use.
-  isStartFor  Domain[]
+  updatedAt            DateTime @updatedAt
+  /// Relation to indicate they are the start for a domain. NEVER use.
+  isStartRoomForDomain Domain?  @relation("isStartRoomForDomain") @ignore
 }
 
 model GroupChat {
@@ -164,7 +262,11 @@ model GroupChat {
   createdAt   DateTime @default(now())
   /// ISO date this row was last updated
   updatedAt   DateTime @updatedAt
-  /// Prisma client relation to users who are members of this group chat
+  /// ID of the User that owns this group chat
+  ownerId     BigInt
+  /// Relation to owner of this group chat
+  owner       User     @relation(fields: [ownerId], references: [id])
+  /// Relation to users who are members of this group chat
   users       User[]   @relation("groupChats", references: [id])
   /// Array of user IDs that are members of this group chat
   userIds     BigInt[]
@@ -179,11 +281,13 @@ enum InviteType {
 
 model Invite {
   /// Snowflake (simpleflake) based BigInt ID
-  id        BigInt     @id
+  id           BigInt     @id
   /// Invite enum
-  type      InviteType
+  type         InviteType
   /// ID of what the invite is for
-  partyId   BigInt
+  partyId      BigInt
+  /// IDs of who can view the invite. Everyone if empty
+  recipientIds BigInt[]
   /// Expiration ISO date
-  expiresAt DateTime?
+  expiresAt    DateTime?
 }

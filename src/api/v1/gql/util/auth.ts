@@ -1,4 +1,4 @@
-import { Account, Domain, Room, Server, User } from '@prisma/client';
+import { Account, Domain, Prisma, Room, Server, User } from '@prisma/client';
 import { DecodedIdToken } from 'firebase-admin/lib/auth/token-verifier';
 
 /*export const authCheck = (ctx: Context) => {
@@ -37,6 +37,16 @@ type PermissionUtility<
   (r: T): PermissionHelper<T>;
 };
 
+const userWithServerIds = Prisma.validator<Prisma.UserArgs>()({
+  include: { servers: { select: { id: true } } },
+});
+export type UserWithServerIds = Prisma.UserGetPayload<typeof userWithServerIds>;
+const serverWithUserIds = Prisma.validator<Prisma.ServerArgs>()({
+  include: { users: { select: { id: true } } },
+});
+export type ServerWithUserIds = Prisma.ServerGetPayload<
+  typeof serverWithUserIds
+>;
 /**
  * Auth helper class
  */
@@ -44,9 +54,9 @@ export class GQLAuth {
   token: DecodedIdToken;
   accountId: Account["id"];
   account: Account;
-  user: User;
+  user: UserWithServerIds;
 
-  updateUser = (u: User) => (this.user = u);
+  updateUser = (u: typeof this.user) => (this.user = u);
 
   /**
    * Determines whether user ID is a member of client account
@@ -60,13 +70,15 @@ export class GQLAuth {
    * Determines whether user ID is a member of server
    */
   isInServer = (sid: Server["id"]) => {
-    return this.user.serverIds.includes(sid);
+    return this.user.servers.includes({ id: sid });
   };
 
   /**
    * Permission methods for servers
    */
-  server: PermissionUtility<Server> = (ser: Server | Server["id"]): any => {
+  server: PermissionUtility<ServerWithUserIds> = (
+    ser: ServerWithUserIds | Server["id"]
+  ): any => {
     if (typeof ser !== "object") {
       return {
         canRead: () => this.isInServer(ser),
@@ -75,16 +87,17 @@ export class GQLAuth {
 
     return {
       toPublic: () => {
-        ser.userIds &&= [];
+        //ser.userIds &&= [];
         (ser as any).users &&= [];
-        ser.domainIds &&= [];
+        //ser.domainIds &&= [];
         (ser as any).domains &&= [];
         ser.ownerId &&= BigInt(0);
         ser.startId &&= BigInt(0);
         (ser as any).start &&= {};
+        (ser as any).owner &&= {};
         return ser;
       },
-      canRead: () => ser.userIds.includes(this.user.id),
+      canRead: () => ser.users.includes({ id: this.user.id }),
       canUpdate: () => ser.ownerId === this.user.id,
       canDelete: () => ser.ownerId === this.user.id,
       canCreateChild: () => ser.ownerId === this.user.id,
@@ -148,11 +161,11 @@ export class GQLAuth {
   userToPublic = (usr?: User | null) => {
     if (!usr) return null;
     usr.accountId &&= "";
-    usr.serverIds &&= [];
+    //usr.serverIds &&= [];
     (usr as any).servers &&= [];
-    usr.groupChatIds &&= [];
+    //usr.groupChatIds &&= [];
     (usr as any).groupChats &&= [];
-    usr.friendIds &&= [];
+    //usr.friendIds &&= [];
     (usr as any).ownedServers &&= [];
     return usr;
   };
@@ -163,14 +176,22 @@ export class GQLAuth {
    */
   serverToPublic = (ser: Server | null) => {
     if (!ser) return null;
-    ser.userIds &&= [];
-    ser.domainIds &&= [];
+    //ser.userIds &&= [];
+    //ser.domainIds &&= [];
+    (ser as any).users &&= [];
+    (ser as any).domains &&= [];
+    (ser as any).owner &&= {};
     ser.ownerId &&= BigInt(0);
+    (ser as any).start &&= {};
     ser.startId &&= BigInt(0); //TODO: start should be bigint to match domain ID type
     return ser;
   };
 
-  constructor(token: DecodedIdToken, account: Account, user: User) {
+  constructor(
+    token: DecodedIdToken,
+    account: Account,
+    user: UserWithServerIds
+  ) {
     this.token = token;
     this.accountId = account.id;
     this.account = account;
