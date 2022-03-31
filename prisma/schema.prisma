@@ -124,11 +124,17 @@ model Role {
   serverId      BigInt
   /// Relation to associated server
   server        Server             @relation(fields: [serverId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  /// Display name of the Role
+  displayName   String
+  /// HEX color code associated with the Role
+  color         String
   /// Relation to serverUsers that are members of this role
   members       ServerUser[]       @relation("members")
   /// Place in role hierarchy, descending. 1st cannot be touched by 2nd, and so on. Must be unique across servers
   order         Int                @default(autoincrement()) @db.SmallInt
-  /// Full permissions (except delete server) and 2nd in hierarchy
+  /// Owner of the server. Full permissions, and the only one that can delete the server. 1st in hierarchy
+  owner         Boolean            @default(false)
+  /// An admin of the server. Full permissions (except delete server) and 2nd in hierarchy
   admin         Boolean            @default(false)
   /// Server Details permissions
   serverDetails DetailPermission[]
@@ -142,6 +148,12 @@ model Role {
   roomDetails   DetailPermission[]
   /// User moderation permissions
   modPerms      ModPermission[]
+
+  /// ISO date the Role was created at
+  createdAt DateTime @default(now())
+  /// ISO date this row was last updated
+  updatedAt DateTime @updatedAt
+
 
   @@unique([serverId, order])
 }
@@ -162,6 +174,11 @@ model ServerUser {
   displayName String?
   /// Relation to roles this ServerUser is a member of
   roles       Role[]  @relation("members")
+
+  /// ISO date the ServerUser was created at (when they joined)
+  createdAt DateTime @default(now())
+  /// ISO date this row was last updated
+  updatedAt DateTime @updatedAt
   @@unique([userId, serverId])
 }
 
@@ -269,7 +286,7 @@ model GroupChat {
   /// Relation to users who are members of this group chat
   users       User[]   @relation("groupChats", references: [id])
   /// Array of user IDs that are members of this group chat
-  userIds     BigInt[]
+  //userIds     BigInt[]
 }
 
 enum InviteType {
@@ -290,4 +307,8 @@ model Invite {
   recipientIds BigInt[]
   /// Expiration ISO date
   expiresAt    DateTime?
+  /// ISO date the invite was created at
+  createdAt    DateTime   @default(now())
+  /// ISO date this row was last updated
+  updatedAt    DateTime   @updatedAt
 }

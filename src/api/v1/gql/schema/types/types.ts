@@ -1,6 +1,6 @@
-import { EmailAddressResolver, TimestampResolver, URLResolver } from 'graphql-scalars';
+import { EmailAddressResolver, HexColorCodeResolver, TimestampResolver, URLResolver } from 'graphql-scalars';
 import { asNexusMethod, enumType } from 'nexus';
-import { InviteType, Provider } from 'nexus-prisma';
+import { DetailPermission, InviteType, ModPermission, Permission, Provider } from 'nexus-prisma';
 
 //export const DateScalar = asNexusMethod(DateTimeResolver, "date", "Date");
 
@@ -20,6 +20,14 @@ export const EmailScalar = asNexusMethod(
 
 export const URLScalar = asNexusMethod(URLResolver, "url", "string");
 
+export const HEXScalar = asNexusMethod(HexColorCodeResolver, "hex", "string");
+
 export const ProviderEnum = enumType(Provider);
 
 export const InviteTypeEnum = enumType(InviteType);
+
+export const CrudPermissionEnum = enumType(Permission);
+
+export const DetailPermissionEnum = enumType(DetailPermission);
+
+export const ModPermissionEnum = enumType(ModPermission);

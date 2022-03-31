@@ -21,9 +21,6 @@ export const UserObject = objectType({
     });
     t.field(u.disabled);
     t.field(u.servers);
-    t.field(u.serverIds);
-    t.field(u.friendIds);
-    t.field(u.groupChatIds);
     t.field(u.groupChats);
     t.field(u.updatedAt);
     t.field(u.ownedServers);

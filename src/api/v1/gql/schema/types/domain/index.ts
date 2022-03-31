@@ -19,7 +19,6 @@ export const DomainObject = objectType({
     });
     t.field(d.createdAt);
     t.field(d.updatedAt);
-    t.field(d.roomIds);
     t.field(d.rooms);
   },
 });

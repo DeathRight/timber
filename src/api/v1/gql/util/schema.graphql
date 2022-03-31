@@ -48,6 +48,12 @@ scalar DateTime
 """An arbitrary-precision Decimal type"""
 scalar Decimal
 
+enum DetailPermission {
+  DESCRIPTION
+  NAME
+  THUMBNAIL
+}
+
 type Domain {
   """ISO date the domain was created at"""
   createdAt: DateTime!
@@ -61,19 +67,16 @@ type Domain {
   """Snowflake (simpleflake) based BigInt ID"""
   id: BigInt!
 
-  """Array of room ids that this domain contains"""
-  roomIds: [BigInt!]!
-
-  """Prisma client relation to rooms that this domain contains"""
+  """Relation to rooms that this domain contains"""
   rooms: [Room!]!
 
-  """Prisma client relation to server that contains this domain"""
+  """Relation to server that contains this domain"""
   server: Server!
 
   """ID of server that contains this domain"""
   serverId: BigInt!
 
-  """Prisma client relation start room"""
+  """Relation start room"""
   start: Room!
 
   """Starting room ID"""
@@ -135,18 +138,26 @@ type GroupChat {
   """Snowflake (simpleflake) based BigInt ID"""
   id: BigInt!
 
+  """Relation to owner of this group chat"""
+  owner: User!
+
+  """ID of the User that owns this group chat"""
+  ownerId: BigInt!
+
   """URL for group chat's thumbnail"""
   thumbnail: String
 
   """ISO date this row was last updated"""
   updatedAt: DateTime!
 
-  """Array of user IDs that are members of this group chat"""
-  userIds: [BigInt!]!
-
-  """Prisma client relation to users who are members of this group chat"""
+  """Relation to users who are members of this group chat"""
   users: [User!]!
 }
+
+"""
+A field whose value is a hex color code: https://en.wikipedia.org/wiki/Web_colors.
+"""
+scalar HexColorCode @specifiedBy(url: "https://en.wikipedia.org/wiki/Web_colors")
 
 type Invite {
   """Expiration ISO date"""
@@ -182,6 +193,15 @@ The `JSONObject` scalar type represents JSON objects as specified by [ECMA-404](
 """
 scalar Json @specifiedBy(url: "http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf")
 
+enum ModPermission {
+  BAN
+  DELETE
+  EDIT
+  INVITE
+  MUTE
+  ROLE
+}
+
 type Mutation {
   """Creates a domain and updates server to reflect"""
   createDomain(data: DomainCreateInput!): Domain
@@ -211,6 +231,13 @@ type Mutation {
 The party object of the invite. Either Server, GroupChat, or User (for friend requests)
 """
 union Party = GroupChat | Server | User
+
+enum Permission {
+  CREATE
+  DELETE
+  READ
+  UPDATE
+}
 
 enum Provider {
   EMAIL
@@ -242,6 +269,65 @@ type Query {
   userCommonality(uid: BigInt!): Json
 }
 
+type Role {
+  """
+  An admin of the server. Full permissions (except delete server) and 2nd in hierarchy
+  """
+  admin: Boolean!
+
+  """HEX color code associated with the Role"""
+  color: HexColorCode!
+
+  """ISO date the Role was created at"""
+  createdAt: DateTime!
+
+  """Display name of the Role"""
+  displayName: String!
+
+  """Global domain CRUD permissions"""
+  domainCrud: [Permission!]!
+
+  """Global domain Details permissions"""
+  domainDetails: [DetailPermission!]!
+
+  """Snowflake (simpleflake) based BigInt ID"""
+  id: BigInt!
+
+  """Relation to serverUsers that are members of this role"""
+  members: [ServerUser!]!
+
+  """User moderation permissions"""
+  modPerms: [ModPermission!]!
+
+  """
+  Place in role hierarchy, descending. 1st cannot be touched by 2nd, and so on. Must be unique across servers
+  """
+  order: Int!
+
+  """
+  Owner of the server. Full permissions, and the only one that can delete the server. 1st in hierarchy
+  """
+  owner: Boolean!
+
+  """Global room CRUD permissions"""
+  roomCrud: [Permission!]!
+
+  """Global room Details permissions"""
+  roomDetails: [DetailPermission!]!
+
+  """Relation to associated server"""
+  server: Server!
+
+  """Server Details permissions"""
+  serverDetails: [DetailPermission!]!
+
+  """ID of associated server"""
+  serverId: BigInt!
+
+  """ISO date this row was last updated"""
+  updatedAt: DateTime!
+}
+
 type Room {
   """ISO date the room was created at"""
   createdAt: DateTime!
@@ -249,7 +335,7 @@ type Room {
   """Global display name"""
   displayName: String!
 
-  """Prisma client relation to domain that contains this room"""
+  """Relation to domain that contains this room"""
   domain: Domain!
 
   """ID of domain that contains this room"""
@@ -275,22 +361,19 @@ type Server {
   """Global display name"""
   displayName: String!
 
-  """Array of domain IDs that this server contains"""
-  domainIds: [BigInt!]!
-
-  """Prisma client relation to domains that this server contains"""
+  """Relation to domains that this server contains"""
   domains: [Domain!]!
 
   """Snowflake (simpleflake) based BigInt ID"""
   id: BigInt!
 
-  """Prisma client relation to user that owns the server"""
+  """Relation to user that owns the server"""
   owner: User!
 
   """User ID of the owner"""
   ownerId: BigInt!
 
-  """Prisma client relation start domain"""
+  """Relation to start domain"""
   start: Domain!
 
   """Starting domain ID"""
@@ -302,10 +385,7 @@ type Server {
   """ISO date this row was last updated"""
   updatedAt: DateTime!
 
-  """Array of user IDs that are members of this server"""
-  userIds: [BigInt!]!
-
-  """Prisma client relation to users who are members of this server"""
+  """Relation to users who are members of this server"""
   users: [User!]!
 }
 
@@ -337,6 +417,37 @@ input ServerUpdateInput {
   thumbnail: URL
 }
 
+type ServerUser {
+  """ISO date the ServerUser was created at (when they joined)"""
+  createdAt: DateTime!
+
+  """
+  Server-specific displayName, if not defined or empty, will use the base User displayName
+  """
+  displayName: String
+
+  """Snowflake (simpleflake) based BigInt ID"""
+  id: BigInt!
+
+  """Relation to roles this ServerUser is a member of"""
+  roles: [Role!]!
+
+  """Relation to associated server"""
+  server: Server!
+
+  """ID of the associated server"""
+  serverId: BigInt!
+
+  """ISO date this row was last updated"""
+  updatedAt: DateTime!
+
+  """Relation to base user"""
+  user: User!
+
+  """ID of the base user"""
+  userId: BigInt!
+}
+
 type Subscription {
   """
   Subscribes to changes for a domain (snapshots), first attempting to return the current snapshot
@@ -365,7 +476,7 @@ A field whose value conforms to the standard URL format as specified in RFC3986:
 scalar URL
 
 type User {
-  """Prisma client relation to account connected to user"""
+  """Relation to account connected to user"""
   account: Account!
 
   """Account ID that this user is connected to"""
@@ -381,13 +492,7 @@ type User {
   """Global display name"""
   displayName: String!
 
-  """Array of user IDs the user is friends with"""
-  friendIds: [BigInt!]!
-
-  """Array of GroupChat IDs for group chats the user is a member of"""
-  groupChatIds: [BigInt!]!
-
-  """Prisma client relation to group chat's the user is a member of"""
+  """Relation to group chats the user is a member of"""
   groupChats: [GroupChat!]!
 
   """Snowflake (simpleflake) based BigInt ID"""
@@ -396,13 +501,10 @@ type User {
   """Timestamp in milliseconds since epoch the user was last active"""
   lastSeen: Timestamp!
 
-  """Prisma client relation to servers user owns"""
+  """Relation to servers user owns"""
   ownedServers: [Server!]!
 
-  """Array of server IDs the user is a member of"""
-  serverIds: [BigInt!]!
-
-  """Prisma client relation to servers user is a member of"""
+  """Relation to servers user is a member of"""
   servers: [Server!]!
 
   """ISO date this row was last updated"""

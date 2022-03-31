@@ -20,8 +20,6 @@ export const ServerObject = objectType({
     t.field(s.owner);
     t.field(s.ownerId);
     t.field(s.users);
-    t.field(s.userIds);
-    t.field(s.domainIds);
     t.field(s.domains);
   },
 });

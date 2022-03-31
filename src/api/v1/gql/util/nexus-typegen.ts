@@ -26,6 +26,10 @@ declare global {
      */
     url<FieldName extends string>(fieldName: FieldName, opts?: core.CommonInputFieldConfig<TypeName, FieldName>): void // "URL";
     /**
+     * A field whose value is a hex color code: https://en.wikipedia.org/wiki/Web_colors.
+     */
+    hex<FieldName extends string>(fieldName: FieldName, opts?: core.CommonInputFieldConfig<TypeName, FieldName>): void // "HexColorCode";
+    /**
      * The party object of the invite. Either Server, GroupChat, or User (for friend requests)
      */
     party<FieldName extends string>(fieldName: FieldName, opts?: core.CommonInputFieldConfig<TypeName, FieldName>): void // "Party";
@@ -70,6 +74,10 @@ declare global {
      * A field whose value conforms to the standard URL format as specified in RFC3986: https://www.ietf.org/rfc/rfc3986.txt.
      */
     url<FieldName extends string>(fieldName: FieldName, ...opts: core.ScalarOutSpread<TypeName, FieldName>): void // "URL";
+    /**
+     * A field whose value is a hex color code: https://en.wikipedia.org/wiki/Web_colors.
+     */
+    hex<FieldName extends string>(fieldName: FieldName, ...opts: core.ScalarOutSpread<TypeName, FieldName>): void // "HexColorCode";
     /**
      * The party object of the invite. Either Server, GroupChat, or User (for friend requests)
      */
@@ -145,7 +153,10 @@ export interface NexusGenInputs {
 }
 
 export interface NexusGenEnums {
+  DetailPermission: "DESCRIPTION" | "NAME" | "THUMBNAIL"
   InviteType: "Friend" | "GroupChat" | "Server"
+  ModPermission: "BAN" | "DELETE" | "EDIT" | "INVITE" | "MUTE" | "ROLE"
+  Permission: "CREATE" | "DELETE" | "READ" | "UPDATE"
   Provider: "EMAIL" | "GITHUB" | "GOOGLE" | "TWITTER"
 }
 
@@ -161,6 +172,7 @@ export interface NexusGenScalars {
   DateTime: any
   Decimal: any
   EmailAddress: string
+  HexColorCode: string
   Json: any
   Timestamp: number
   URL: string
@@ -183,7 +195,6 @@ export interface NexusGenObjects {
     description?: string | null; // String
     displayName: string; // String!
     id: NexusGenScalars['BigInt']; // BigInt!
-    roomIds: NexusGenScalars['BigInt'][]; // [BigInt!]!
     serverId: NexusGenScalars['BigInt']; // BigInt!
     startId: NexusGenScalars['BigInt']; // BigInt!
     thumbnail?: NexusGenScalars['URL'] | null; // URL
@@ -194,9 +205,9 @@ export interface NexusGenObjects {
     description: string; // String!
     displayName: string; // String!
     id: NexusGenScalars['BigInt']; // BigInt!
+    ownerId: NexusGenScalars['BigInt']; // BigInt!
     thumbnail?: string | null; // String
     updatedAt: NexusGenScalars['DateTime']; // DateTime!
-    userIds: NexusGenScalars['BigInt'][]; // [BigInt!]!
   }
   Invite: { // root type
     expiresAt?: NexusGenScalars['DateTime'] | null; // DateTime
@@ -206,6 +217,23 @@ export interface NexusGenObjects {
   }
   Mutation: {};
   Query: {};
+  Role: { // root type
+    admin: boolean; // Boolean!
+    color: NexusGenScalars['HexColorCode']; // HexColorCode!
+    createdAt: NexusGenScalars['DateTime']; // DateTime!
+    displayName: string; // String!
+    domainCrud: NexusGenEnums['Permission'][]; // [Permission!]!
+    domainDetails: NexusGenEnums['DetailPermission'][]; // [DetailPermission!]!
+    id: NexusGenScalars['BigInt']; // BigInt!
+    modPerms: NexusGenEnums['ModPermission'][]; // [ModPermission!]!
+    order: number; // Int!
+    owner: boolean; // Boolean!
+    roomCrud: NexusGenEnums['Permission'][]; // [Permission!]!
+    roomDetails: NexusGenEnums['DetailPermission'][]; // [DetailPermission!]!
+    serverDetails: NexusGenEnums['DetailPermission'][]; // [DetailPermission!]!
+    serverId: NexusGenScalars['BigInt']; // BigInt!
+    updatedAt: NexusGenScalars['DateTime']; // DateTime!
+  }
   Room: { // root type
     createdAt: NexusGenScalars['DateTime']; // DateTime!
     displayName: string; // String!
@@ -218,13 +246,19 @@ export interface NexusGenObjects {
     createdAt: NexusGenScalars['DateTime']; // DateTime!
     description?: string | null; // String
     displayName: string; // String!
-    domainIds: NexusGenScalars['BigInt'][]; // [BigInt!]!
     id: NexusGenScalars['BigInt']; // BigInt!
     ownerId: NexusGenScalars['BigInt']; // BigInt!
     startId: NexusGenScalars['BigInt']; // BigInt!
     thumbnail?: NexusGenScalars['URL'] | null; // URL
     updatedAt: NexusGenScalars['DateTime']; // DateTime!
-    userIds: NexusGenScalars['BigInt'][]; // [BigInt!]!
+  }
+  ServerUser: { // root type
+    createdAt: NexusGenScalars['DateTime']; // DateTime!
+    displayName?: string | null; // String
+    id: NexusGenScalars['BigInt']; // BigInt!
+    serverId: NexusGenScalars['BigInt']; // BigInt!
+    updatedAt: NexusGenScalars['DateTime']; // DateTime!
+    userId: NexusGenScalars['BigInt']; // BigInt!
   }
   Subscription: {};
   User: { // root type
@@ -233,11 +267,8 @@ export interface NexusGenObjects {
     createdAt: NexusGenScalars['DateTime']; // DateTime!
     disabled: boolean; // Boolean!
     displayName: string; // String!
-    friendIds: NexusGenScalars['BigInt'][]; // [BigInt!]!
-    groupChatIds: NexusGenScalars['BigInt'][]; // [BigInt!]!
     id: NexusGenScalars['BigInt']; // BigInt!
     lastSeen: NexusGenScalars['Timestamp']; // Timestamp!
-    serverIds: NexusGenScalars['BigInt'][]; // [BigInt!]!
     updatedAt: NexusGenScalars['DateTime']; // DateTime!
   }
 }
@@ -271,7 +302,6 @@ export interface NexusGenFieldTypes {
     description: string | null; // String
     displayName: string; // String!
     id: NexusGenScalars['BigInt']; // BigInt!
-    roomIds: NexusGenScalars['BigInt'][]; // [BigInt!]!
     rooms: NexusGenRootTypes['Room'][]; // [Room!]!
     server: NexusGenRootTypes['Server']; // Server!
     serverId: NexusGenScalars['BigInt']; // BigInt!
@@ -285,9 +315,10 @@ export interface NexusGenFieldTypes {
     description: string; // String!
     displayName: string; // String!
     id: NexusGenScalars['BigInt']; // BigInt!
+    owner: NexusGenRootTypes['User']; // User!
+    ownerId: NexusGenScalars['BigInt']; // BigInt!
     thumbnail: string | null; // String
     updatedAt: NexusGenScalars['DateTime']; // DateTime!
-    userIds: NexusGenScalars['BigInt'][]; // [BigInt!]!
     users: NexusGenRootTypes['User'][]; // [User!]!
   }
   Invite: { // field return type
@@ -313,6 +344,25 @@ export interface NexusGenFieldTypes {
     userByName: NexusGenRootTypes['User'] | null; // User
     userCommonality: NexusGenScalars['Json'] | null; // Json
   }
+  Role: { // field return type
+    admin: boolean; // Boolean!
+    color: NexusGenScalars['HexColorCode']; // HexColorCode!
+    createdAt: NexusGenScalars['DateTime']; // DateTime!
+    displayName: string; // String!
+    domainCrud: NexusGenEnums['Permission'][]; // [Permission!]!
+    domainDetails: NexusGenEnums['DetailPermission'][]; // [DetailPermission!]!
+    id: NexusGenScalars['BigInt']; // BigInt!
+    members: NexusGenRootTypes['ServerUser'][]; // [ServerUser!]!
+    modPerms: NexusGenEnums['ModPermission'][]; // [ModPermission!]!
+    order: number; // Int!
+    owner: boolean; // Boolean!
+    roomCrud: NexusGenEnums['Permission'][]; // [Permission!]!
+    roomDetails: NexusGenEnums['DetailPermission'][]; // [DetailPermission!]!
+    server: NexusGenRootTypes['Server']; // Server!
+    serverDetails: NexusGenEnums['DetailPermission'][]; // [DetailPermission!]!
+    serverId: NexusGenScalars['BigInt']; // BigInt!
+    updatedAt: NexusGenScalars['DateTime']; // DateTime!
+  }
   Room: { // field return type
     createdAt: NexusGenScalars['DateTime']; // DateTime!
     displayName: string; // String!
@@ -326,7 +376,6 @@ export interface NexusGenFieldTypes {
     createdAt: NexusGenScalars['DateTime']; // DateTime!
     description: string | null; // String
     displayName: string; // String!
-    domainIds: NexusGenScalars['BigInt'][]; // [BigInt!]!
     domains: NexusGenRootTypes['Domain'][]; // [Domain!]!
     id: NexusGenScalars['BigInt']; // BigInt!
     owner: NexusGenRootTypes['User']; // User!
@@ -335,8 +384,18 @@ export interface NexusGenFieldTypes {
     startId: NexusGenScalars['BigInt']; // BigInt!
     thumbnail: NexusGenScalars['URL'] | null; // URL
     updatedAt: NexusGenScalars['DateTime']; // DateTime!
-    userIds: NexusGenScalars['BigInt'][]; // [BigInt!]!
     users: NexusGenRootTypes['User'][]; // [User!]!
+  }
+  ServerUser: { // field return type
+    createdAt: NexusGenScalars['DateTime']; // DateTime!
+    displayName: string | null; // String
+    id: NexusGenScalars['BigInt']; // BigInt!
+    roles: NexusGenRootTypes['Role'][]; // [Role!]!
+    server: NexusGenRootTypes['Server']; // Server!
+    serverId: NexusGenScalars['BigInt']; // BigInt!
+    updatedAt: NexusGenScalars['DateTime']; // DateTime!
+    user: NexusGenRootTypes['User']; // User!
+    userId: NexusGenScalars['BigInt']; // BigInt!
   }
   Subscription: { // field return type
     domainSnapshot: NexusGenRootTypes['Domain'] | null; // Domain
@@ -350,13 +409,10 @@ export interface NexusGenFieldTypes {
     createdAt: NexusGenScalars['DateTime']; // DateTime!
     disabled: boolean; // Boolean!
     displayName: string; // String!
-    friendIds: NexusGenScalars['BigInt'][]; // [BigInt!]!
-    groupChatIds: NexusGenScalars['BigInt'][]; // [BigInt!]!
     groupChats: NexusGenRootTypes['GroupChat'][]; // [GroupChat!]!
     id: NexusGenScalars['BigInt']; // BigInt!
     lastSeen: NexusGenScalars['Timestamp']; // Timestamp!
     ownedServers: NexusGenRootTypes['Server'][]; // [Server!]!
-    serverIds: NexusGenScalars['BigInt'][]; // [BigInt!]!
     servers: NexusGenRootTypes['Server'][]; // [Server!]!
     updatedAt: NexusGenScalars['DateTime']; // DateTime!
   }
@@ -380,7 +436,6 @@ export interface NexusGenFieldTypeNames {
     description: 'String'
     displayName: 'String'
     id: 'BigInt'
-    roomIds: 'BigInt'
     rooms: 'Room'
     server: 'Server'
     serverId: 'BigInt'
@@ -394,9 +449,10 @@ export interface NexusGenFieldTypeNames {
     description: 'String'
     displayName: 'String'
     id: 'BigInt'
+    owner: 'User'
+    ownerId: 'BigInt'
     thumbnail: 'String'
     updatedAt: 'DateTime'
-    userIds: 'BigInt'
     users: 'User'
   }
   Invite: { // field return type name
@@ -422,6 +478,25 @@ export interface NexusGenFieldTypeNames {
     userByName: 'User'
     userCommonality: 'Json'
   }
+  Role: { // field return type name
+    admin: 'Boolean'
+    color: 'HexColorCode'
+    createdAt: 'DateTime'
+    displayName: 'String'
+    domainCrud: 'Permission'
+    domainDetails: 'DetailPermission'
+    id: 'BigInt'
+    members: 'ServerUser'
+    modPerms: 'ModPermission'
+    order: 'Int'
+    owner: 'Boolean'
+    roomCrud: 'Permission'
+    roomDetails: 'DetailPermission'
+    server: 'Server'
+    serverDetails: 'DetailPermission'
+    serverId: 'BigInt'
+    updatedAt: 'DateTime'
+  }
   Room: { // field return type name
     createdAt: 'DateTime'
     displayName: 'String'
@@ -435,7 +510,6 @@ export interface NexusGenFieldTypeNames {
     createdAt: 'DateTime'
     description: 'String'
     displayName: 'String'
-    domainIds: 'BigInt'
     domains: 'Domain'
     id: 'BigInt'
     owner: 'User'
@@ -444,8 +518,18 @@ export interface NexusGenFieldTypeNames {
     startId: 'BigInt'
     thumbnail: 'URL'
     updatedAt: 'DateTime'
-    userIds: 'BigInt'
     users: 'User'
+  }
+  ServerUser: { // field return type name
+    createdAt: 'DateTime'
+    displayName: 'String'
+    id: 'BigInt'
+    roles: 'Role'
+    server: 'Server'
+    serverId: 'BigInt'
+    updatedAt: 'DateTime'
+    user: 'User'
+    userId: 'BigInt'
   }
   Subscription: { // field return type name
     domainSnapshot: 'Domain'
@@ -459,13 +543,10 @@ export interface NexusGenFieldTypeNames {
     createdAt: 'DateTime'
     disabled: 'Boolean'
     displayName: 'String'
-    friendIds: 'BigInt'
-    groupChatIds: 'BigInt'
     groupChats: 'GroupChat'
     id: 'BigInt'
     lastSeen: 'Timestamp'
     ownedServers: 'Server'
-    serverIds: 'BigInt'
     servers: 'Server'
     updatedAt: 'DateTime'
   }

@@ -12,7 +12,8 @@ export const GroupChatObject = objectType({
     t.field(g.thumbnail);
     t.field(g.createdAt);
     t.field(g.updatedAt);
-    t.field(g.userIds);
     t.field(g.users);
+    t.field(g.ownerId);
+    t.field(g.owner);
   },
 });
