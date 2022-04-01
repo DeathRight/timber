@@ -14,7 +14,13 @@ export const serverById = queryField("serverById", {
       where: {
         id: args.id,
       },
-      include: { start: true, domains: true, users: true },
+      include: {
+        start: true,
+        domains: true,
+        users: true,
+        serverUsers: true,
+        roles: true,
+      },
     });
     if (!ser) throw new mercurius.ErrorWithProps("Invalid ID");
 

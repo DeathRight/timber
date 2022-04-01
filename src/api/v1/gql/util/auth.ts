@@ -37,15 +37,23 @@ type PermissionUtility<
   (r: T): PermissionHelper<T>;
 };
 
-const userWithServerIds = Prisma.validator<Prisma.UserArgs>()({
-  include: { servers: { select: { id: true } } },
+export const userWithIncludes = Prisma.validator<Prisma.UserArgs>()({
+  include: {
+    servers: { select: { id: true } },
+    friends: { select: { id: true } },
+    groupChats: { select: { id: true } },
+    serverUsers: {
+      select: { id: true, serverId: true },
+      include: { roles: true },
+    },
+  },
 });
-export type UserWithServerIds = Prisma.UserGetPayload<typeof userWithServerIds>;
-const serverWithUserIds = Prisma.validator<Prisma.ServerArgs>()({
+export type UserWithIncludes = Prisma.UserGetPayload<typeof userWithIncludes>;
+const serverWithIncludes = Prisma.validator<Prisma.ServerArgs>()({
   include: { users: { select: { id: true } } },
 });
 export type ServerWithUserIds = Prisma.ServerGetPayload<
-  typeof serverWithUserIds
+  typeof serverWithIncludes
 >;
 /**
  * Auth helper class
@@ -54,7 +62,7 @@ export class GQLAuth {
   token: DecodedIdToken;
   accountId: Account["id"];
   account: Account;
-  user: UserWithServerIds;
+  user: UserWithIncludes;
 
   updateUser = (u: typeof this.user) => (this.user = u);
 
@@ -119,7 +127,7 @@ export class GQLAuth {
         dom.displayName &&= "";
         dom.startId &&= BigInt(0);
         (dom as any).start &&= {};
-        dom.roomIds &&= [];
+        //dom.roomIds &&= [];
         (dom as any).rooms &&= [];
         return dom;
       },
@@ -187,11 +195,7 @@ export class GQLAuth {
     return ser;
   };
 
-  constructor(
-    token: DecodedIdToken,
-    account: Account,
-    user: UserWithServerIds
-  ) {
+  constructor(token: DecodedIdToken, account: Account, user: UserWithIncludes) {
     this.token = token;
     this.accountId = account.id;
     this.account = account;

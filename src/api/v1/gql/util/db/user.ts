@@ -1,5 +1,7 @@
 import { PrismaClient } from '@prisma/client';
 
+import { userWithIncludes } from '../auth';
+
 export const getUserFromAccount = async (
   prisma: PrismaClient,
   aid: string,
@@ -10,6 +12,7 @@ export const getUserFromAccount = async (
       id: uid as bigint, //schema compat
       accountId: aid,
     },
+    ...userWithIncludes,
   });
 
   return user;

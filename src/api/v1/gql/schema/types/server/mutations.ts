@@ -20,14 +20,14 @@ export const updateServer = mutationField("updateServer", {
       displayName: displayName ?? undefined,
       description: description ?? undefined,
       thumbnail: thumbnail ?? undefined,
-      startId: startId ?? undefined,
-    };
+      start: startId ? { connect: { id: startId } } : undefined,
+    } as Prisma.ServerUpdateArgs["data"];
 
     if (!ctx.auth.isInServer(args.id))
       throw new mercurius.ErrorWithProps("You are not in this server!");
     const server = await ctx.prisma.server.findUnique({
       where: { id: args.id },
-      include: { users: { select: { id: true } } },
+      include: { users: { select: { id: true } }, roles: true },
     });
     if (!server) throw new mercurius.ErrorWithProps("Unable to fetch server");
     if (!ctx.auth.server(server).canUpdate)
@@ -38,13 +38,19 @@ export const updateServer = mutationField("updateServer", {
         id: args.id,
       },
       data,
-      include: { start: true, domains: true, users: true },
+      include: {
+        domains: true,
+        users: true,
+        serverUsers: true,
+        roles: true,
+        start: true,
+      },
     });
 
     const serverTopic = topic("Server").id(args.id).changed;
     ctx.pubsub.publish({
       topic: serverTopic.label,
-      payload: serverTopic.payload(data),
+      payload: serverTopic.payload(data as any), // Prisma client update types add 'number' as possible bigint ID, bug?
     });
 
     return update;
@@ -70,6 +76,21 @@ export const createServer = mutationField("createServer", {
       rooms: { create: startRoom },
       start: { connect: { id: startRoom.id } },
     };
+    //Create ServerUser
+    const serverUser: Prisma.ServerUserCreateWithoutServerInput = {
+      id: timberflake(),
+      user: { connect: { id: client.id } },
+    };
+    //Create Owner role with client's ServerUser as a member
+    const ownerRole: Prisma.RoleCreateWithoutServerInput = {
+      id: timberflake(),
+      order: 1,
+      displayName: "Owner",
+      color: "#00F",
+      owner: true,
+      members: { connect: { id: serverUser.id } },
+    };
+
     //Create server
     const data = {
       id: timberflake(),
@@ -80,10 +101,18 @@ export const createServer = mutationField("createServer", {
       domains: { create: startDomain },
       start: { connect: { id: startDomain.id } },
       users: { connect: { id: client.id } },
+      serverUsers: { create: serverUser },
+      roles: { create: ownerRole },
     } as Prisma.ServerCreateArgs["data"];
     const server = await ctx.prisma.server.create({
       data: data,
-      include: { start: true, domains: true, users: true },
+      include: {
+        start: true,
+        domains: true,
+        users: true,
+        serverUsers: true,
+        roles: true,
+      },
     });
 
     //Add server to user's serverIds list

@@ -9,7 +9,7 @@ import { join } from 'path';
 
 import { verifyToken } from './firebase-auth';
 import schemav1 from './gql/schema';
-import { GQLAuth, UserWithServerIds } from './gql/util/auth';
+import { GQLAuth, UserWithIncludes } from './gql/util/auth';
 import { Context } from './gql/util/context';
 import { getAccountFromId } from './gql/util/db/account';
 import { getUserFromAccount } from './gql/util/db/user';
@@ -59,7 +59,7 @@ export default async function (fastify: FastifyInstance, opts: any, done: any) {
     async (schema, document, ctx: Context) => {
       const req = ctx.req;
       const decodedToken = await verifyToken(req);
-      const user = req.session.get("user") as UserWithServerIds | undefined;
+      const user = req.session.get("user") as UserWithIncludes | undefined;
       const account = req.session.get("account") as Account | undefined;
 
       if (decodedToken && user && account) {
@@ -90,7 +90,7 @@ export default async function (fastify: FastifyInstance, opts: any, done: any) {
     },
     async (req, reply) => {
       const decodedToken = await verifyToken(req);
-      let user;
+      let user: UserWithIncludes | undefined;
       let account: Account | undefined;
 
       if (decodedToken) {

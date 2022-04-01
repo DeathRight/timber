@@ -61,7 +61,7 @@ model User {
   /// Relation to friends of user
   friends         User[]       @relation("friends")
   /// Necessary for prisma client relation. NEVER use.
-  friendRelation  User[]       @relation("friends") @ignore
+  friendRelation  User[]       @relation("friends")
   /// Relation to group chats the user is a member of
   groupChats      GroupChat[]  @relation("groupChats", references: [id])
   /// Relation to group chats the user owns
@@ -244,7 +244,7 @@ model Domain {
   /// Relation start room
   start                  Room    @relation("isStartRoomForDomain", fields: [startId], references: [id])
   /// Relation to indicate they are the start for a server. NEVER use.
-  isStartDomainForServer Server? @relation("isStartDomainForServer") @ignore
+  isStartDomainForServer Server? @relation("isStartDomainForServer")
 }
 
 model Room {
@@ -263,7 +263,7 @@ model Room {
   /// ISO date this row was last updated
   updatedAt            DateTime @updatedAt
   /// Relation to indicate they are the start for a domain. NEVER use.
-  isStartRoomForDomain Domain?  @relation("isStartRoomForDomain") @ignore
+  isStartRoomForDomain Domain?  @relation("isStartRoomForDomain")
 }
 
 model GroupChat {

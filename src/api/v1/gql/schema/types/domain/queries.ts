@@ -16,7 +16,7 @@ export const domainById = queryField("domainById", {
     } else {
       const dom = await ctx.prisma.domain.findUnique({
         where: { id: args.id },
-        include: { server: true, rooms: true },
+        include: { server: true, rooms: true, start: true },
       });
       if (!dom) throw new mercurius.ErrorWithProps("Invalid ID!");
       return dom;

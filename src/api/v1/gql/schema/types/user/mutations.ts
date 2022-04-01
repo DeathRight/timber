@@ -43,15 +43,18 @@ export const createUser = mutationField("createUser", {
   args: { data: nonNull(UserCreateInput) },
   async resolve(_, args, ctx) {
     const acc = ctx.auth.account;
+    const { displayName, avatar } = args.data;
     const data = {
       id: timberflake(),
       accountId: acc.id,
       lastSeen: Date.now(),
-      ...args.data,
+      displayName,
+      avatar: avatar ?? undefined,
     };
 
     const user = await ctx.prisma.user.create({
       data: data,
+      include: { account: true },
     });
 
     const userTopic = topic("User").id(data.id).created;

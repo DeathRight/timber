@@ -58,15 +58,27 @@ export const userCommonalityQuery = queryField("userCommonality", {
     const usr1 = ctx.auth.user;
     const usr2 = await ctx.prisma.user.findUnique({
       where: { id: args.uid },
-      select: { friendIds: true, serverIds: true },
+      select: {
+        friends: { select: { id: true } },
+        servers: { select: { id: true } },
+      },
     });
 
     if (!usr2) {
       throw new mercurius.ErrorWithProps("Invalid ID");
     }
 
-    const serverIds = intersectIds(usr1.serverIds, usr2.serverIds);
-    const friendIds = intersectIds(usr1.friendIds, usr2.friendIds);
+    const one = {
+      serverIds: usr1.servers.map((v) => v.id),
+      friendIds: usr1.friends.map((v) => v.id),
+    };
+    const two = {
+      serverIds: usr2.servers.map((v) => v.id),
+      friendIds: usr2.friends.map((v) => v.id),
+    };
+
+    const serverIds = intersectIds(one.serverIds, two.serverIds);
+    const friendIds = intersectIds(one.friendIds, two.friendIds);
     return { friendIds: friendIds, serverIds: serverIds };
   },
 });

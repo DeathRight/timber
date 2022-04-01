@@ -80,29 +80,30 @@ export const createDomain = mutationField("createDomain", {
       displayName: displayName,
       description: description,
       thumbnail: thumbnail,
-      serverId: serverId,
-      server: { connect: { id: serverId } },
       rooms: { create: startRoom },
-      start: { connect: { id: startRoom.id } },
-    } as Prisma.DomainCreateArgs["data"];
-    const domain = await ctx.prisma.domain.create({
-      data: data,
-    });
+    } as Prisma.DomainCreateWithoutServerInput;
 
-    //Add domain to server's domainIds list
+    //Create & add domain to server's domains
     const server = await ctx.prisma.server.update({
       where: {
         id: serverId,
       },
       data: {
-        domainIds: {
-          push: domain.id,
-        },
         domains: {
-          connect: { id: domain.id },
+          create: data,
         },
       },
+      include: { domains: true },
     });
+
+    //Get domain for publish and return
+    const domain = server.domains.find((d) => d.id === data.id);
+    if (!domain)
+      throw new mercurius.ErrorWithProps(
+        "Unable to fetch domain after creation",
+        undefined,
+        500
+      );
 
     //Publish changes
     const serverTopic = topic("Server").id(serverId).changed;

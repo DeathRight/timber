@@ -16,6 +16,13 @@ export const serverSnapshotSub = subscriptionField("serverSnapshot", {
       where: {
         id: args.id,
       },
+      include: {
+        start: true,
+        domains: true,
+        users: true,
+        serverUsers: true,
+        roles: true,
+      },
     });
     if (!ser) {
       throw new mercurius.ErrorWithProps(
