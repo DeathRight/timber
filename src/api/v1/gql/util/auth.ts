@@ -1,6 +1,8 @@
 import { Account, Domain, Prisma, Room, Server, User } from '@prisma/client';
 import { DecodedIdToken } from 'firebase-admin/lib/auth/token-verifier';
 
+import { RolePermEnumMapReturn, RolePermEnumsType } from '../schema/types/role';
+
 /*export const authCheck = (ctx: Context) => {
   if (!ctx.user) throw new mercurius.ErrorWithProps("NOT AUTHORIZED");
 };*/
@@ -18,9 +20,9 @@ interface PermissionHelper<T extends Record<string, any>> {
    */
   canRead: () => boolean;
   /**
-   * Whether client can update locally non-sensitive properties of resource
+   * List of locally non-sensitive properties of resource user can update
    */
-  canUpdate: () => boolean;
+  canUpdate: <E extends keyof RolePermEnumsType>() => RolePermEnumMapReturn<E>;
   /**
    * Whether client can delete resource
    */
@@ -36,7 +38,7 @@ type PermissionUtility<
   (r: T["id"]): Pick<PermissionHelper<T>, "canRead">;
   (r: T): PermissionHelper<T>;
 };
-
+/* ------------------------------ Type helpers ------------------------------ */
 export const userWithIncludes = Prisma.validator<Prisma.UserArgs>()({
   include: {
     servers: { select: { id: true } },
@@ -49,12 +51,14 @@ export const userWithIncludes = Prisma.validator<Prisma.UserArgs>()({
   },
 });
 export type UserWithIncludes = Prisma.UserGetPayload<typeof userWithIncludes>;
+
 const serverWithIncludes = Prisma.validator<Prisma.ServerArgs>()({
   include: { users: { select: { id: true } } },
 });
 export type ServerWithUserIds = Prisma.ServerGetPayload<
   typeof serverWithIncludes
 >;
+
 /**
  * Auth helper class
  */
@@ -79,6 +83,29 @@ export class GQLAuth {
    */
   isInServer = (sid: Server["id"]) => {
     return this.user.servers.includes({ id: sid });
+  };
+  /**
+   * Whether client has an Admin role in the server with ID of `sid`
+   */
+  isAdmin = (sid: Server["id"]) => {
+    const su = this.user.serverUsers.find((v) => v.id === sid);
+    if (!su) return false;
+
+    return su.roles.find((r) => r.owner || r.admin) !== undefined;
+  };
+  /**
+   * Gets boolean permissions map of client ServerUser from highest role permissions
+   */
+  getPermissions = <T extends keyof RolePermEnumsType>(
+    sid: Server["id"],
+    type: T
+  ) => {
+    const su = this.user.serverUsers.find((v) => v.serverId === sid);
+    if (!su) {
+      return undefined;
+    }
+
+    //TODO
   };
 
   /**
@@ -106,7 +133,24 @@ export class GQLAuth {
         return ser;
       },
       canRead: () => ser.users.includes({ id: this.user.id }),
-      canUpdate: () => ser.ownerId === this.user.id,
+      canUpdate: (): DetailsPermEnumMap => {
+        if (ser.ownerId === this.user.id || this.isAdmin(ser.id))
+          return { NAME: true, DESCRIPTION: true, THUMBNAIL: true };
+
+        return {
+          NAME: this.hasPermissionOrAdmin(ser.id, "serverDetails", "NAME"),
+          DESCRIPTION: this.hasPermissionOrAdmin(
+            ser.id,
+            "serverDetails",
+            "DESCRIPTION"
+          ),
+          THUMBNAIL: this.hasPermissionOrAdmin(
+            ser.id,
+            "serverDetails",
+            "THUMBNAIL"
+          ),
+        };
+      },
       canDelete: () => ser.ownerId === this.user.id,
       canCreateChild: () => ser.ownerId === this.user.id,
     };

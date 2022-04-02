@@ -1,7 +1,53 @@
+import { DetailPermission, ModPermission, Permission } from '@prisma/client';
 import { objectType } from 'nexus';
 import { Role } from 'nexus-prisma';
 
 const r = Role;
+
+export const RolePermEnums = {
+  modPerms: ModPermission,
+  serverDetails: DetailPermission,
+  domainCrud: Permission,
+  domainDetails: DetailPermission,
+  roomCrud: Permission,
+  roomDetails: DetailPermission,
+};
+export type RolePermEnumsType = {
+  modPerms: ModPermission;
+  serverDetails: DetailPermission;
+  domainCrud: Permission;
+  domainDetails: DetailPermission;
+  roomCrud: Permission;
+  roomDetails: DetailPermission;
+};
+
+export type RolePermEnumMapReturn<
+  T extends keyof RolePermEnumsType,
+  B extends boolean | undefined = undefined
+> = { [k in RolePermEnumsType[T]]: B | boolean };
+
+export function RolePermEnumMap<
+  T extends keyof RolePermEnumsType,
+  E extends undefined
+>(type: T): RolePermEnumMapReturn<T, false>;
+
+export function RolePermEnumMap<
+  T extends keyof RolePermEnumsType,
+  E extends RolePermEnumsType[T][] | undefined
+>(type: T, enums: E): RolePermEnumMapReturn<T>;
+
+export function RolePermEnumMap<
+  T extends keyof RolePermEnumsType,
+  E extends RolePermEnumsType[T][] | undefined
+>(type: T, enums?: E) {
+  if (enums) return Object.fromEntries(enums.map((v) => [v, true]));
+
+  const ret = new Map();
+  for (const k in RolePermEnums[type]) {
+    ret.set(k, false);
+  }
+  return Object.fromEntries(ret);
+}
 
 export const RoleObject = objectType({
   name: r.$name,
