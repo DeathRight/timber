@@ -128,7 +128,12 @@ export const createServer = mutationField("createServer", {
           connect: { id: server.id },
         },
       },
-      include: { servers: { select: { id: true } } },
+      include: {
+        servers: { select: { id: true } },
+        groupChats: { select: { id: true } },
+        friends: { select: { id: true } },
+        serverUsers: { include: { roles: true } },
+      },
     });
 
     //Update session and emit update for changed user

@@ -1,11 +1,7 @@
 import { Account, Domain, Prisma, Room, Server, User } from '@prisma/client';
 import { DecodedIdToken } from 'firebase-admin/lib/auth/token-verifier';
 
-import { RolePermEnumMapReturn, RolePermEnumsType } from '../schema/types/role';
-
-/*export const authCheck = (ctx: Context) => {
-  if (!ctx.user) throw new mercurius.ErrorWithProps("NOT AUTHORIZED");
-};*/
+import { RolePermEnumMap, RolePermEnumMapReturn, RolePermEnumsLength, RolePermEnumsType } from '../util/role';
 
 /**
  * Permission helpers
@@ -22,7 +18,12 @@ interface PermissionHelper<T extends Record<string, any>> {
   /**
    * List of locally non-sensitive properties of resource user can update
    */
-  canUpdate: <E extends keyof RolePermEnumsType>() => RolePermEnumMapReturn<E>;
+  canUpdate: <
+    E extends keyof Pick<
+      RolePermEnumsType,
+      "serverDetails" & "domainDetails" & "roomDetails"
+    >
+  >() => RolePermEnumMapReturn<E, true | false> | undefined;
   /**
    * Whether client can delete resource
    */
@@ -31,6 +32,10 @@ interface PermissionHelper<T extends Record<string, any>> {
    * Whether client can create sub-resources of resource (e.g.: domains, rooms)
    */
   canCreateChild: () => boolean;
+  /**
+   * Whether client can delete sub-resources of resource (e.g.: domains, rooms)
+   */
+  canDeleteChild: () => boolean;
 }
 type PermissionUtility<
   T extends { [index: string]: any; id: bigint | string }
@@ -38,7 +43,9 @@ type PermissionUtility<
   (r: T["id"]): Pick<PermissionHelper<T>, "canRead">;
   (r: T): PermissionHelper<T>;
 };
-/* ------------------------------ Type helpers ------------------------------ */
+/* -------------------------------------------------------------------------- */
+/*                                Type helpers                                */
+/* -------------------------------------------------------------------------- */
 export const userWithIncludes = Prisma.validator<Prisma.UserArgs>()({
   include: {
     servers: { select: { id: true } },
@@ -59,6 +66,11 @@ export type ServerWithUserIds = Prisma.ServerGetPayload<
   typeof serverWithIncludes
 >;
 
+const roomWithIncludes = Prisma.validator<Prisma.RoomArgs>()({
+  include: { domain: true },
+});
+export type RoomWithIncludes = Prisma.RoomGetPayload<typeof roomWithIncludes>;
+/* ---------------------------- End type helpers ---------------------------- */
 /**
  * Auth helper class
  */
@@ -101,11 +113,29 @@ export class GQLAuth {
     type: T
   ) => {
     const su = this.user.serverUsers.find((v) => v.serverId === sid);
+    // If ServerUser doesn't exist for this server, user isn't in server. Return with all permissions set to false
     if (!su) {
-      return undefined;
+      return RolePermEnumMap(type);
     }
 
-    //TODO
+    // If admin or owner, will be all permissions set to `true`, otherwise will be undefined
+    let ret: RolePermEnumMapReturn<T, true> | undefined = undefined;
+    // If not admin or owner, will fill with highest permissions of every role
+    let eret: RolePermEnumsType[T][] = [];
+
+    su.roles.every((r) => {
+      if (r.admin || r.owner) {
+        ret = RolePermEnumMap(type, true);
+        return false;
+      }
+
+      const enums = r[type] as RolePermEnumsType[T][];
+      eret.push(...enums);
+      // If number of permissions is the same as the length of obtained permissions, we are done searching
+      if (eret.length === RolePermEnumsLength[type]) return false;
+    });
+
+    return ret ?? RolePermEnumMap(type, eret);
   };
 
   /**
@@ -133,28 +163,13 @@ export class GQLAuth {
         return ser;
       },
       canRead: () => ser.users.includes({ id: this.user.id }),
-      canUpdate: (): DetailsPermEnumMap => {
-        if (ser.ownerId === this.user.id || this.isAdmin(ser.id))
-          return { NAME: true, DESCRIPTION: true, THUMBNAIL: true };
-
-        return {
-          NAME: this.hasPermissionOrAdmin(ser.id, "serverDetails", "NAME"),
-          DESCRIPTION: this.hasPermissionOrAdmin(
-            ser.id,
-            "serverDetails",
-            "DESCRIPTION"
-          ),
-          THUMBNAIL: this.hasPermissionOrAdmin(
-            ser.id,
-            "serverDetails",
-            "THUMBNAIL"
-          ),
-        };
-      },
+      canUpdate: () => this.getPermissions(ser.id, "serverDetails"),
       canDelete: () => ser.ownerId === this.user.id,
-      canCreateChild: () => ser.ownerId === this.user.id,
+      canCreateChild: () => this.getPermissions(ser.id, "domainCrud").CREATE,
+      canDeleteChild: () => this.getPermissions(ser.id, "domainCrud").DELETE,
     };
   };
+
   /**
    * Permission methods for domains
    */
@@ -175,16 +190,22 @@ export class GQLAuth {
         (dom as any).rooms &&= [];
         return dom;
       },
-      canRead: () => true,
-      canUpdate: () => true,
-      canDelete: () => true,
-      canCreateChild: () => true,
+      canRead: () => this.getPermissions(dom.serverId, "domainCrud").READ,
+      canUpdate: () => this.getPermissions(dom.serverId, "domainDetails"),
+      canDelete: () => this.getPermissions(dom.serverId, "domainCrud").DELETE,
+      canCreateChild: () =>
+        this.getPermissions(dom.serverId, "roomCrud").CREATE,
+      canDeleteChild: () =>
+        this.getPermissions(dom.serverId, "roomCrud").DELETE,
     };
   };
+
   /**
    * Permission methods for rooms
    */
-  room: PermissionUtility<Room> = (rm: Room | Room["id"]): any => {
+  room: PermissionUtility<RoomWithIncludes> = (
+    rm: RoomWithIncludes | Room["id"]
+  ): any => {
     if (typeof rm !== "object") {
       return {
         canRead: () => true, //TODO: roles
@@ -198,10 +219,12 @@ export class GQLAuth {
         rm.domainId &&= BigInt(0);
         return rm;
       },
-      canRead: () => true,
-      canUpdate: () => true,
-      canDelete: () => true,
-      canCreateChild: () => true,
+      canRead: () => this.getPermissions(rm.domain.serverId, "roomCrud").READ,
+      canUpdate: () => this.getPermissions(rm.domain.serverId, "roomDetails"),
+      canDelete: () =>
+        this.getPermissions(rm.domain.serverId, "roomCrud").DELETE,
+      canCreateChild: () => false,
+      canDeleteChild: () => false,
     };
   };
 
