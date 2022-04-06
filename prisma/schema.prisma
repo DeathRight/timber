@@ -238,6 +238,8 @@ model Domain {
   //roomIds     BigInt[]
   /// Relation to rooms that this domain contains
   rooms       Room[]   @relation("rooms")
+  /// Display order
+  order       Int      @default(autoincrement()) @db.SmallInt
 
   /// Starting room ID
   startId                BigInt  @unique
@@ -245,6 +247,8 @@ model Domain {
   start                  Room    @relation("isStartRoomForDomain", fields: [startId], references: [id])
   /// Relation to indicate they are the start for a server. NEVER use.
   isStartDomainForServer Server? @relation("isStartDomainForServer")
+
+  @@unique([serverId, order])
 }
 
 model Room {

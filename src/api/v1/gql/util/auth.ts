@@ -2,6 +2,7 @@ import { Account, Domain, Prisma, Room, Server, User } from '@prisma/client';
 import { DecodedIdToken } from 'firebase-admin/lib/auth/token-verifier';
 
 import { RolePermEnumMap, RolePermEnumMapReturn, RolePermEnumsLength, RolePermEnumsType } from '../util/role';
+import { Context } from './context';
 
 /**
  * Permission helpers
@@ -79,6 +80,7 @@ export class GQLAuth {
   accountId: Account["id"];
   account: Account;
   user: UserWithIncludes;
+  prisma: Context["prisma"];
 
   updateUser = (u: typeof this.user) => (this.user = u);
 
@@ -176,7 +178,14 @@ export class GQLAuth {
   domain: PermissionUtility<Domain> = (dom: Domain | Domain["id"]): any => {
     if (typeof dom !== "object") {
       return {
-        canRead: () => true, //TODO: roles
+        canRead: async () => {
+          const domain = await this.prisma.domain.findUnique({
+            where: { id: dom },
+          });
+          if (!domain || !this.isInServer(domain.serverId)) return false; // ? Seperate domain non-existance error throw?
+
+          return this.getPermissions(domain.serverId, "domainCrud").READ;
+        },
       };
     }
 
@@ -208,7 +217,15 @@ export class GQLAuth {
   ): any => {
     if (typeof rm !== "object") {
       return {
-        canRead: () => true, //TODO: roles
+        canRead: async () => {
+          const room = await this.prisma.room.findUnique({
+            where: { id: rm },
+            include: { domain: { include: { server: true } } },
+          });
+          if (!room || !this.isInServer(room.domain.serverId)) return false; // ? Seperate room non-existance error throw?
+
+          return this.getPermissions(room.domain.serverId, "roomCrud").READ;
+        },
       };
     }
 
@@ -262,10 +279,16 @@ export class GQLAuth {
     return ser;
   };
 
-  constructor(token: DecodedIdToken, account: Account, user: UserWithIncludes) {
+  constructor(
+    token: DecodedIdToken,
+    account: Account,
+    user: UserWithIncludes,
+    prismaClient: Context["prisma"]
+  ) {
     this.token = token;
     this.accountId = account.id;
     this.account = account;
     this.user = user;
+    this.prisma = prismaClient;
   }
 }
