@@ -1,13 +1,26 @@
-import { Account, Domain, GroupChat, Invite, Room, Server, User } from '@prisma/client';
-import { assignIfDefined } from '@util';
+import { Account, Domain, GroupChat, Invite, Prisma, Room, Server, User } from '@prisma/client';
 import { PubSub } from 'mercurius';
 
+import { DomainWithIncludes, RoomWithIncludes, ServerWithIncludes, UserWithIncludes } from './auth';
+
 type Topics = {
-  User: Partial<User>;
+  User:
+    | Prisma.UserCreateArgs["data"]
+    | Prisma.UserUpdateArgs["data"]
+    | Partial<UserWithIncludes>;
   Account: Partial<Account>;
-  Server: Partial<Server>;
-  Domain: Partial<Domain>;
-  Room: Partial<Room>;
+  Server:
+    | Prisma.ServerCreateArgs["data"]
+    | Prisma.ServerUpdateArgs["data"]
+    | Partial<ServerWithIncludes>;
+  Domain:
+    | Prisma.DomainCreateArgs["data"]
+    | Prisma.DomainUpdateArgs["data"]
+    | Partial<DomainWithIncludes>;
+  Room:
+    | Prisma.RoomCreateArgs["data"]
+    | Prisma.RoomUpdateArgs["data"]
+    | Partial<RoomWithIncludes>;
   GroupChat: Partial<GroupChat>;
   Invite: Partial<Invite>;
 };
@@ -16,6 +29,8 @@ export enum TopicPayloadType {
   "Deleted",
   "Created",
   "Changed",
+  "ChildAdded",
+  "ChildRemoved",
 }
 type TopicPayload<PT extends TopicPayloadType, T extends keyof Topics> = {
   type: PT;
@@ -25,6 +40,60 @@ type TopicInput = {
   [t in keyof Omit<Topics, "Account">]: bigint;
 } & {
   Account: string;
+};
+
+/**
+ * Merges changes from `obj2` to `obj1` and returns merged object, changing strategy with Arrays based on `t`
+ *
+ * Otherwise, only merges changes if a `obj2` property is not null or undefined.
+ *
+ * ---
+ *
+ * If TopicPayloadType `t` is `ChildAdded` or `ChildRemoved`, strategy expects a single obj in each Array property (where Array property is i.e. users, domains, etc.).
+ *
+ * If `t` is `ChildAdded`, Array property should contain the full child obj.
+ *
+ * If `t` is `ChildRemoved`, Array property shape should only be `{id: ...}`.
+ */
+const mergeChanges = <T extends Record<any, any>>(
+  t: TopicPayloadType,
+  obj1: T,
+  obj2: Partial<T>
+) => {
+  let ret: Record<any, any> = obj1;
+  for (const key in obj2) {
+    if (Array.isArray(obj2[key])) {
+      const a1 = obj1[key] as Array<{ [k: string]: any; id: number }>;
+      const a2 = obj2[key] as typeof a1;
+
+      const sub = a2[0];
+      if (t === TopicPayloadType.ChildAdded) {
+        if (!a1.find((o) => o.id === sub.id)) {
+          a1.push(sub);
+          ret[key] = a1;
+        }
+      } else if (t === TopicPayloadType.ChildRemoved) {
+        const found = a1.findIndex((o) => o.id === sub.id);
+        if (found >= 0) {
+          a1.splice(found, 1);
+          ret[key] = a1;
+        }
+      } else {
+        for (const [k, v] of a2.entries()) {
+          const fi = a1.findIndex((o) => o.id === v.id);
+          if (fi >= 0) {
+            a1.splice(fi, 1, v);
+          } else {
+            a1.push(v);
+          }
+        }
+      }
+    } else {
+      ret[key] = obj2[key] != null ? obj2[key] : obj1[key];
+    }
+  }
+
+  return ret as T;
 };
 
 const createResult = <T extends keyof Topics>(
@@ -53,7 +122,8 @@ const createResult = <T extends keyof Topics>(
         return (async function* () {
           if (obj) yield obj;
           for await (let v of await sub) {
-            snapshot = assignIfDefined(snapshot, v);
+            snapshot = mergeChanges(pt, snapshot, v);
+            //snapshot = assignIfDefined(snapshot, v);
             yield snapshot;
           }
         })();
@@ -62,9 +132,16 @@ const createResult = <T extends keyof Topics>(
 };
 
 export const topic = <T extends keyof Topics>(t: T) => ({
-  id: (_id: TopicInput[T]) => ({
-    changed: createResult<T>(TopicPayloadType.Changed, `${t}:${_id}:CHANGED`),
-    deleted: createResult<T>(TopicPayloadType.Deleted, `${t}:${_id}:CHANGED`),
-    created: createResult<T>(TopicPayloadType.Created, `${t}:${_id}:CHANGED`),
-  }),
+  id: (_id: TopicInput[T]) => {
+    const label = `${t}:${_id}`;
+    const cR = (topic: TopicPayloadType, lbl: string = label) =>
+      createResult<T>(topic, lbl);
+    return {
+      changed: cR(TopicPayloadType.Changed),
+      deleted: cR(TopicPayloadType.Deleted),
+      created: cR(TopicPayloadType.Created),
+      childAdded: cR(TopicPayloadType.ChildAdded),
+      childRemoved: cR(TopicPayloadType.ChildRemoved),
+    };
+  },
 });

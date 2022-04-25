@@ -44,3 +44,18 @@ export function assignIfDefined<T extends Record<any, any>>(
 export function timberflake() {
   return simpleflake(undefined, undefined, epoch) as bigint;
 }
+
+/**
+ * Checks if all values in an object are the same as `v`
+ * @param v Value to check against
+ * @param obj Object to check
+ * @returns True if all values in `obj` match `v`, false if not
+ */
+export function isAllSame<T>(v: T, obj: { [key: string]: T }) {
+  for (const k in obj) {
+    if (obj[k] !== v) return false;
+  }
+  return true;
+}
+
+isAllSame(true, { a: true, b: 1 });

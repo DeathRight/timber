@@ -2,7 +2,8 @@ import { topic } from '@api/v1/gql/util/topics';
 import mercurius from 'mercurius';
 import { subscriptionField } from 'nexus';
 
-import { PrismaServer, s } from './constants';
+import { ServerWithIncludes, serverWithIncludes } from '../../../util/auth';
+import { s } from './constants';
 
 export const serverSnapshotSub = subscriptionField("serverSnapshot", {
   type: "Server",
@@ -16,23 +17,19 @@ export const serverSnapshotSub = subscriptionField("serverSnapshot", {
       where: {
         id: args.id,
       },
-      include: {
-        start: true,
-        domains: true,
-        users: true,
-        serverUsers: true,
-        roles: true,
-      },
+      // Include all
+      ...serverWithIncludes,
     });
     if (!ser) {
       throw new mercurius.ErrorWithProps(
-        "Unable to fetch snapshot for subscription"
+        "Unable to fetch snapshot for subscription",
+        { type: "server", id: args.id }
       );
     }
 
     return await topic("Server").id(args.id).changed.snapshot(ser, ctx.pubsub);
   },
-  resolve(eventData: PrismaServer, args, ctx) {
+  resolve(eventData: ServerWithIncludes, args, ctx) {
     if (!ctx.auth.isInServer(args.id)) {
       return ctx.auth.serverToPublic(eventData);
     } else {

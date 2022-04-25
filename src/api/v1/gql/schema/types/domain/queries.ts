@@ -1,6 +1,7 @@
 import mercurius from 'mercurius';
 import { queryField } from 'nexus';
 
+import { domainWithIncludes } from '../../../util/auth';
 import { d } from './constants';
 
 export const domainById = queryField("domainById", {
@@ -16,9 +17,10 @@ export const domainById = queryField("domainById", {
     } else {
       const dom = await ctx.prisma.domain.findUnique({
         where: { id: args.id },
-        include: { server: true, rooms: true, start: true },
+        ...domainWithIncludes,
       });
       if (!dom) throw new mercurius.ErrorWithProps("Invalid ID!");
+
       return dom;
     }
   },

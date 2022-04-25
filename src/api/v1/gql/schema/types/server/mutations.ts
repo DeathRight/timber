@@ -1,9 +1,10 @@
 import { topic } from '@api/v1/gql/util/topics';
 import { Prisma } from '@prisma/client';
-import { timberflake } from '@util';
+import { isAllSame, timberflake } from '@util';
 import mercurius from 'mercurius';
 import { mutationField, nonNull } from 'nexus';
 
+import { serverWithIncludes } from '../../../util/auth';
 import { s } from './constants';
 import { ServerCreateInput, ServerUpdateInput } from './inputs';
 
@@ -16,28 +17,47 @@ export const updateServer = mutationField("updateServer", {
   },
   async resolve(_, args, ctx) {
     const { displayName, description, thumbnail, startId } = args.data;
-    const data = {
+    let data = {
       displayName: displayName ?? undefined,
       description: description ?? undefined,
       thumbnail: thumbnail ?? undefined,
       start: startId ? { connect: { id: startId } } : undefined,
     } as Prisma.ServerUpdateArgs["data"];
 
+    // Permission checks
     if (!ctx.auth.isInServer(args.id))
       throw new mercurius.ErrorWithProps("You are not in this server!");
     const server = await ctx.prisma.server.findUnique({
       where: { id: args.id },
-      include: { users: { select: { id: true } }, roles: true },
+      ...serverWithIncludes,
     });
     if (!server) throw new mercurius.ErrorWithProps("Unable to fetch server");
-    if (!ctx.auth.server(server).canUpdate)
-      throw new mercurius.ErrorWithProps("You cannot update this server!");
 
+    const sPerms = ctx.auth.server(server);
+    const uPerms = sPerms.canUpdate();
+    if (isAllSame(false, uPerms))
+      throw new mercurius.ErrorWithProps(
+        "You don't have permission to update this server!"
+      );
+
+    // Omit keys the user does not have permission to update
+    data = {
+      displayName: uPerms.NAME ? data.displayName : undefined,
+      description: uPerms.DESCRIPTION ? data.description : undefined,
+      thumbnail: uPerms.THUMBNAIL ? data.thumbnail : undefined,
+      start:
+        sPerms.canCreateChild() || sPerms.canDeleteChild()
+          ? data.start
+          : undefined,
+    };
+
+    // Update server
     const update = await ctx.prisma.server.update({
       where: {
         id: args.id,
       },
       data,
+      // * Include all
       include: {
         domains: true,
         users: true,
@@ -50,7 +70,7 @@ export const updateServer = mutationField("updateServer", {
     const serverTopic = topic("Server").id(args.id).changed;
     ctx.pubsub.publish({
       topic: serverTopic.label,
-      payload: serverTopic.payload(data as any), // Prisma client update types add 'number' as possible bigint ID, bug?
+      payload: serverTopic.payload(data), // ? Prisma client update types add 'number' as possible bigint ID, bug?
     });
 
     return update;
@@ -65,7 +85,7 @@ export const createServer = mutationField("createServer", {
     const client = ctx.auth.user;
     const { displayName, description, thumbnail, startName } = args.data;
 
-    //Create starting domain and room
+    // Create starting domain and room
     const startRoom: Prisma.RoomCreateWithoutDomainInput = {
       id: timberflake(),
       displayName: "general",
@@ -76,12 +96,12 @@ export const createServer = mutationField("createServer", {
       rooms: { create: startRoom },
       start: { connect: { id: startRoom.id } },
     };
-    //Create ServerUser
+    // Create ServerUser
     const serverUser: Prisma.ServerUserCreateWithoutServerInput = {
       id: timberflake(),
       user: { connect: { id: client.id } },
     };
-    //Create Owner role with client's ServerUser as a member
+    // Create Owner role with client's ServerUser as a member
     const ownerRole: Prisma.RoleCreateWithoutServerInput = {
       id: timberflake(),
       order: 1,
@@ -91,7 +111,7 @@ export const createServer = mutationField("createServer", {
       members: { connect: { id: serverUser.id } },
     };
 
-    //Create server
+    // Create server
     const data = {
       id: timberflake(),
       owner: { connect: { id: client.id } },
@@ -106,16 +126,10 @@ export const createServer = mutationField("createServer", {
     } as Prisma.ServerCreateArgs["data"];
     const server = await ctx.prisma.server.create({
       data: data,
-      include: {
-        start: true,
-        domains: true,
-        users: true,
-        serverUsers: true,
-        roles: true,
-      },
+      ...serverWithIncludes,
     });
 
-    //Add server to user's serverIds list
+    // Add server to user's serverIds list
     const user = await ctx.prisma.user.update({
       where: {
         id: client.id,
@@ -136,13 +150,14 @@ export const createServer = mutationField("createServer", {
       },
     });
 
-    //Update session and emit update for changed user
+    // Update session and emit update for changed user and created server
     ctx.req.session.set("user", user);
     ctx.auth.updateUser(user);
-    const userTopic = topic("User").id(client.id).changed;
+
+    const userTopic = topic("User").id(client.id).childAdded;
     ctx.pubsub.publish({
       topic: userTopic.label,
-      payload: userTopic.payload(user),
+      payload: userTopic.payload({ servers: [server] }),
     });
 
     const serverTopic = topic("Server").id(data.id as bigint).created;

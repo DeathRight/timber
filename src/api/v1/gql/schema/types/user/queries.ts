@@ -2,6 +2,7 @@ import { intersectIds } from '@util';
 import mercurius from 'mercurius';
 import { queryField } from 'nexus';
 
+import { userWithAllIncludes } from '../../../util/auth';
 import { u } from './constants';
 
 export const userByIdQuery = queryField("userById", {
@@ -18,11 +19,13 @@ export const userByIdQuery = queryField("userById", {
       where: {
         id: args.id,
       },
+      ...userWithAllIncludes,
     });
-    if (!auth.isClient(args.id) && usr) {
+
+    if (!usr) throw new mercurius.ErrorWithProps("Invalid ID");
+    if (!auth.isClient(args.id)) {
       usr = auth.userToPublic(usr);
     }
-    if (!usr) throw new mercurius.ErrorWithProps("Invalid ID");
     return usr;
   },
 });
@@ -38,11 +41,13 @@ export const userByNameQuery = queryField("userByName", {
     const auth = ctx.auth;
     let usr = await ctx.prisma.user.findFirst({
       where: { displayName: args.displayName },
+      ...userWithAllIncludes,
     });
-    if (usr && !auth.isClient(usr.id)) {
+
+    if (!usr) throw new mercurius.ErrorWithProps("Invalid name");
+    if (!auth.isClient(usr.id)) {
       usr = auth.userToPublic(usr);
     }
-    if (!usr) throw new mercurius.ErrorWithProps("Invalid name");
     return usr;
   },
 });

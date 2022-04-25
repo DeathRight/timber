@@ -1,9 +1,10 @@
 import { topic } from '@api/v1/gql/util/topics';
 import { Prisma } from '@prisma/client';
-import { timberflake } from '@util';
+import { isAllSame, timberflake } from '@util';
 import mercurius from 'mercurius';
 import { mutationField, nonNull } from 'nexus';
 
+import { domainWithIncludes, serverWithIncludes } from '../../../util/auth';
 import { d } from './constants';
 import { DomainCreateInput, DomainUpdateInput } from './inputs';
 
@@ -16,22 +17,40 @@ export const updateDomain = mutationField("updateDomain", {
   },
   async resolve(_, args, ctx) {
     const { displayName, description, thumbnail, startId } = args.data;
-    const data = {
+    let data = {
       displayName: displayName ?? undefined,
       description: description ?? undefined,
       thumbnail: thumbnail ?? undefined,
       startId: startId ?? undefined,
     };
 
-    if (!ctx.auth.isInServer(args.id))
-      throw new mercurius.ErrorWithProps("You are not in this server!");
+    // Fetch domain to check if user is in it's server and can update
     const domain = await ctx.prisma.domain.findUnique({
       where: { id: args.id },
+      ...domainWithIncludes,
     });
-    if (!domain) throw new mercurius.ErrorWithProps("Unable to fetch domain");
-    if (!ctx.auth.domain(domain).canUpdate)
-      throw new mercurius.ErrorWithProps("You cannot update this domain!");
+    if (!domain || !ctx.auth.isInServer(domain.serverId))
+      throw new mercurius.ErrorWithProps("Unable to fetch domain");
 
+    const dPerms = ctx.auth.domain(domain);
+    const uPerms = dPerms.canUpdate();
+    if (isAllSame(false, uPerms))
+      throw new mercurius.ErrorWithProps(
+        "You don't have permission to update this domain!"
+      );
+
+    // Omit keys the user does not have permission to update
+    data = {
+      displayName: uPerms.NAME ? data.displayName : undefined,
+      description: uPerms.DESCRIPTION ? data.description : undefined,
+      thumbnail: uPerms.THUMBNAIL ? data.thumbnail : undefined,
+      // If they have permission to create or delete a room, they can change startId
+      startId:
+        dPerms.canCreateChild() || dPerms.canDeleteChild()
+          ? data.startId
+          : undefined,
+    };
+    // Update domain
     const update = await ctx.prisma.domain.update({
       where: {
         id: args.id,
@@ -39,6 +58,7 @@ export const updateDomain = mutationField("updateDomain", {
       data,
     });
 
+    // Publish changes
     const domainTopic = topic("Domain").id(args.id).changed;
     ctx.pubsub.publish({
       topic: domainTopic.label,
@@ -60,12 +80,14 @@ export const createDomain = mutationField("createDomain", {
     //Permissions check
     if (!ctx.auth.server(serverId).canRead())
       throw new mercurius.ErrorWithProps("Invalid permissions!");
+
     const oldServer = await ctx.prisma.server.findUnique({
       where: { id: serverId },
-      include: { users: { select: { id: true } } },
+      ...serverWithIncludes,
     });
     if (!oldServer)
       throw new mercurius.ErrorWithProps("Unable to fetch server");
+
     if (!ctx.auth.server(oldServer).canCreateChild())
       throw new mercurius.ErrorWithProps("Invalid permissions!");
     //End check
@@ -106,10 +128,10 @@ export const createDomain = mutationField("createDomain", {
       );
 
     //Publish changes
-    const serverTopic = topic("Server").id(serverId).changed;
+    const serverTopic = topic("Server").id(serverId).childAdded;
     ctx.pubsub.publish({
       topic: serverTopic.label,
-      payload: serverTopic.payload(server),
+      payload: serverTopic.payload({ domains: [domain] }),
     });
 
     const domainTopic = topic("Domain").id(data.id as bigint).created;

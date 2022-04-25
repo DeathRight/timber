@@ -1,6 +1,8 @@
 import { EmailAddressResolver, HexColorCodeResolver, TimestampResolver, URLResolver } from 'graphql-scalars';
-import { asNexusMethod, enumType } from 'nexus';
+import { asNexusMethod, enumType, scalarType } from 'nexus';
 import { DetailPermission, InviteType, ModPermission, Permission, Provider } from 'nexus-prisma';
+
+import { TopicPayloadType } from '../../util/topics';
 
 //export const DateScalar = asNexusMethod(DateTimeResolver, "date", "Date");
 
@@ -31,3 +33,12 @@ export const CrudPermissionEnum = enumType(Permission);
 export const DetailPermissionEnum = enumType(DetailPermission);
 
 export const ModPermissionEnum = enumType(ModPermission);
+
+export const TopicPayloadTypesScalar = scalarType({
+  name: "TopicPayloadTypes",
+  asNexusMethod: "topicPayloadTypes",
+  description: "TopicPayloadTypes as enum object",
+  serialize() {
+    return JSON.stringify(TopicPayloadType);
+  },
+});

@@ -206,6 +206,9 @@ type Mutation {
   """Creates a domain and updates server to reflect"""
   createDomain(data: DomainCreateInput!): Domain
 
+  """Creates a room and updates domain to reflect"""
+  createRoom(data: RoomCreateInput!): Room
+
   """Creates a server and updates current user to reflect"""
   createServer(data: ServerCreateInput!): Server
 
@@ -217,6 +220,9 @@ type Mutation {
 
   """Update non-sensitive information of a domain."""
   updateDomain(data: DomainUpdateInput!, id: BigInt!): Domain
+
+  """Update non-sensitive information of a room"""
+  updateRoom(data: RoomUpdateInput!, id: BigInt!): Room
 
   """Update non-sensitive information of a server."""
   updateServer(data: ServerUpdateInput!, id: BigInt!): Server
@@ -250,8 +256,24 @@ type Query {
   """Returns domain with `id`"""
   domainById(id: BigInt!): Domain
 
+  """Returns room with `id`"""
+  roomById(id: BigInt!): Room
+
   """Returns server with `id`"""
   serverById(id: BigInt!): Server
+
+  """
+  Returns ServerUser with `id`. Sensitive fields will be empty unless base user is current user
+  """
+  serverUserById(id: BigInt!): ServerUser
+
+  """
+  Returns ServerUser by `uId` and `sId`. Sensitive fields will be empty unless base user is current user
+  """
+  serverUserByUserAndServerId(sId: BigInt!, uId: BigInt!): ServerUser
+
+  """Returns a JSON enum object of TopicPayloadType"""
+  topicPayloadTypes: TopicPayloadTypes
 
   """
   Returns user with `id`. Sensitive fields will be empty unless user is current user
@@ -351,6 +373,25 @@ type Room {
   updatedAt: DateTime!
 }
 
+input RoomCreateInput {
+  """Global display name"""
+  displayName: String!
+
+  """ID of domain that contains this room"""
+  domainId: BigInt!
+
+  """URL for room's thumbnail"""
+  thumbnail: URL
+}
+
+input RoomUpdateInput {
+  """Global display name"""
+  displayName: String
+
+  """URL for room's thumbnail"""
+  thumbnail: URL
+}
+
 type Server {
   """ISO date the server was created at"""
   createdAt: DateTime!
@@ -418,6 +459,9 @@ input ServerUpdateInput {
 }
 
 type ServerUser {
+  """Either server specific avatar, or global avatar from base User"""
+  avatar: URL
+
   """ISO date the ServerUser was created at (when they joined)"""
   createdAt: DateTime!
 
@@ -448,11 +492,34 @@ type ServerUser {
   userId: BigInt!
 }
 
+input ServerUserCreateInput {
+  avatar: URL
+
+  """
+  Server-specific displayName, if not defined or empty, will use the base User displayName
+  """
+  displayName: String
+}
+
+input ServerUserUpdateInput {
+  avatar: URL
+
+  """
+  Server-specific displayName, if not defined or empty, will use the base User displayName
+  """
+  displayName: String
+}
+
 type Subscription {
   """
   Subscribes to changes for a domain (snapshots), first attempting to return the current snapshot
   """
   domainSnapshot(id: BigInt!): Domain
+
+  """
+  Subscribes to changes for a room (snapshots), first attempting to return the current snapshot
+  """
+  roomSnapshot(id: BigInt!): Room
 
   """
   Subscribes to changes for a server (snapshots), first attempting to return the current snapshot
@@ -469,6 +536,9 @@ type Subscription {
 The javascript `Date` as integer. Type represents date and time as number of milliseconds from start of UNIX epoch.
 """
 scalar Timestamp
+
+"""TopicPayloadTypes as enum object"""
+scalar TopicPayloadTypes
 
 """
 A field whose value conforms to the standard URL format as specified in RFC3986: https://www.ietf.org/rfc/rfc3986.txt.

@@ -2,7 +2,8 @@ import { topic } from '@api/v1/gql/util/topics';
 import mercurius from 'mercurius';
 import { subscriptionField } from 'nexus';
 
-import { d, PrismaDomain } from './constants';
+import { DomainWithIncludes, domainWithIncludes } from '../../../util/auth';
+import { d } from './constants';
 
 export const domainSnapshotSub = subscriptionField("domainSnapshot", {
   type: "Domain",
@@ -16,17 +17,18 @@ export const domainSnapshotSub = subscriptionField("domainSnapshot", {
       where: {
         id: args.id,
       },
-      include: { server: true, start: true, rooms: true },
+      ...domainWithIncludes,
     });
     if (!dom) {
       throw new mercurius.ErrorWithProps(
-        "Unable to fetch snapshot for subscription"
+        "Unable to fetch snapshot for subscription",
+        { type: "domain", id: args.id }
       );
     }
 
     return await topic("Domain").id(args.id).changed.snapshot(dom, ctx.pubsub);
   },
-  resolve(eventData: PrismaDomain, args, ctx) {
+  resolve(eventData: DomainWithIncludes, args, ctx) {
     const authDom = ctx.auth.domain(eventData);
     if (!authDom.canRead()) {
       return authDom.toPublic();

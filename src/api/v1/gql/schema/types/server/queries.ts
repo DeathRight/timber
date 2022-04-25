@@ -1,6 +1,7 @@
 import mercurius from 'mercurius';
 import { queryField } from 'nexus';
 
+import { serverWithIncludes } from '../../../util/auth';
 import { s } from './constants';
 
 export const serverById = queryField("serverById", {
@@ -14,13 +15,7 @@ export const serverById = queryField("serverById", {
       where: {
         id: args.id,
       },
-      include: {
-        start: true,
-        domains: true,
-        users: true,
-        serverUsers: true,
-        roles: true,
-      },
+      ...serverWithIncludes,
     });
     if (!ser) throw new mercurius.ErrorWithProps("Invalid ID");
 

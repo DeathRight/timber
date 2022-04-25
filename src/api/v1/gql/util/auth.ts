@@ -7,7 +7,13 @@ import { Context } from './context';
 /**
  * Permission helpers
  */
-interface PermissionHelper<T extends Record<string, any>> {
+interface PermissionHelper<
+  T extends Record<string, any>,
+  E extends keyof Pick<
+    RolePermEnumsType,
+    "serverDetails" | "domainDetails" | "roomDetails"
+  >
+> {
   /**
    * Sanitizes of sensitive information and returns the result for public consumption
    */
@@ -19,12 +25,7 @@ interface PermissionHelper<T extends Record<string, any>> {
   /**
    * List of locally non-sensitive properties of resource user can update
    */
-  canUpdate: <
-    E extends keyof Pick<
-      RolePermEnumsType,
-      "serverDetails" & "domainDetails" & "roomDetails"
-    >
-  >() => RolePermEnumMapReturn<E, true | false> | undefined;
+  canUpdate: () => RolePermEnumMapReturn<E, true | false>;
   /**
    * Whether client can delete resource
    */
@@ -39,10 +40,14 @@ interface PermissionHelper<T extends Record<string, any>> {
   canDeleteChild: () => boolean;
 }
 type PermissionUtility<
-  T extends { [index: string]: any; id: bigint | string }
+  T extends { [index: string]: any; id: bigint | string },
+  E extends keyof Pick<
+    RolePermEnumsType,
+    "serverDetails" | "domainDetails" | "roomDetails"
+  >
 > = {
-  (r: T["id"]): Pick<PermissionHelper<T>, "canRead">;
-  (r: T): PermissionHelper<T>;
+  (r: T["id"]): Pick<PermissionHelper<T, E>, "canRead">;
+  (r: T): PermissionHelper<T, E>;
 };
 /* -------------------------------------------------------------------------- */
 /*                                Type helpers                                */
@@ -60,14 +65,62 @@ export const userWithIncludes = Prisma.validator<Prisma.UserArgs>()({
 });
 export type UserWithIncludes = Prisma.UserGetPayload<typeof userWithIncludes>;
 
-const serverWithIncludes = Prisma.validator<Prisma.ServerArgs>()({
+export const userWithAllIncludes = Prisma.validator<Prisma.UserArgs>()({
+  include: {
+    account: true,
+    servers: true,
+    friends: true,
+    groupChats: true,
+    serverUsers: true,
+    ownedServers: true,
+  },
+});
+export type UserWithAllIncludes = Prisma.UserGetPayload<
+  typeof userWithAllIncludes
+>;
+
+export const serverUserWithIncludes = Prisma.validator<Prisma.ServerUserArgs>()(
+  {
+    include: {
+      user: true,
+      server: true,
+      roles: true,
+    },
+  }
+);
+export type ServerUserWithIncludes = Prisma.ServerUserGetPayload<
+  typeof serverUserWithIncludes
+>;
+
+const serverWithUserIds = Prisma.validator<Prisma.ServerArgs>()({
   include: { users: { select: { id: true } } },
 });
 export type ServerWithUserIds = Prisma.ServerGetPayload<
+  typeof serverWithUserIds
+>;
+
+export const serverWithIncludes = Prisma.validator<Prisma.ServerArgs>()({
+  include: {
+    users: true,
+    domains: true,
+    start: true,
+    owner: true,
+    serverUsers: true,
+    roles: true,
+  },
+});
+export type ServerWithIncludes = Prisma.ServerGetPayload<
   typeof serverWithIncludes
 >;
 
-const roomWithIncludes = Prisma.validator<Prisma.RoomArgs>()({
+export const domainWithIncludes = Prisma.validator<Prisma.DomainArgs>()({
+  include: { server: true, start: true, rooms: true },
+});
+export type DomainWithIncludes = Prisma.DomainGetPayload<
+  typeof domainWithIncludes
+>;
+
+export const roomWithIncludes = Prisma.validator<Prisma.RoomArgs>()({
   include: { domain: true },
 });
 export type RoomWithIncludes = Prisma.RoomGetPayload<typeof roomWithIncludes>;
@@ -143,8 +196,8 @@ export class GQLAuth {
   /**
    * Permission methods for servers
    */
-  server: PermissionUtility<ServerWithUserIds> = (
-    ser: ServerWithUserIds | Server["id"]
+  server: PermissionUtility<ServerWithIncludes, "serverDetails"> = (
+    ser: ServerWithIncludes | Server["id"]
   ): any => {
     if (typeof ser !== "object") {
       return {
@@ -154,17 +207,16 @@ export class GQLAuth {
 
     return {
       toPublic: () => {
-        //ser.userIds &&= [];
-        (ser as any).users &&= [];
-        //ser.domainIds &&= [];
-        (ser as any).domains &&= [];
+        ser.users &&= [];
+        ser.domains &&= [];
         ser.ownerId &&= BigInt(0);
+        ser.owner &&= {} as typeof ser.owner; // * Lie to TS, it's ok, we've covered in docs
         ser.startId &&= BigInt(0);
-        (ser as any).start &&= {};
-        (ser as any).owner &&= {};
+        ser.start &&= {} as typeof ser.start;
+        ser.serverUsers &&= [];
         return ser;
       },
-      canRead: () => ser.users.includes({ id: this.user.id }),
+      canRead: () => ser.users.find((u) => u.id === this.user.id), // * Do not want to use isInServer since session may be out of sync
       canUpdate: () => this.getPermissions(ser.id, "serverDetails"),
       canDelete: () => ser.ownerId === this.user.id,
       canCreateChild: () => this.getPermissions(ser.id, "domainCrud").CREATE,
@@ -175,7 +227,9 @@ export class GQLAuth {
   /**
    * Permission methods for domains
    */
-  domain: PermissionUtility<Domain> = (dom: Domain | Domain["id"]): any => {
+  domain: PermissionUtility<DomainWithIncludes, "domainDetails"> = (
+    dom: DomainWithIncludes | Domain["id"]
+  ): any => {
     if (typeof dom !== "object") {
       return {
         canRead: async () => {
@@ -194,9 +248,11 @@ export class GQLAuth {
         dom.description &&= "";
         dom.displayName &&= "";
         dom.startId &&= BigInt(0);
-        (dom as any).start &&= {};
-        //dom.roomIds &&= [];
-        (dom as any).rooms &&= [];
+        dom.start &&= {} as typeof dom.start; // * Lie to TS, it's ok, we've covered in docs
+        dom.rooms &&= [];
+        dom.server &&= {} as typeof dom.server;
+        dom.serverId &&= BigInt(0);
+        dom.order &&= -1;
         return dom;
       },
       canRead: () => this.getPermissions(dom.serverId, "domainCrud").READ,
@@ -212,7 +268,7 @@ export class GQLAuth {
   /**
    * Permission methods for rooms
    */
-  room: PermissionUtility<RoomWithIncludes> = (
+  room: PermissionUtility<RoomWithIncludes, "roomDetails"> = (
     rm: RoomWithIncludes | Room["id"]
   ): any => {
     if (typeof rm !== "object") {
@@ -234,6 +290,7 @@ export class GQLAuth {
         rm.displayName &&= "";
         rm.thumbnail &&= "";
         rm.domainId &&= BigInt(0);
+        rm.domain &&= {} as typeof rm.domain;
         return rm;
       },
       canRead: () => this.getPermissions(rm.domain.serverId, "roomCrud").READ,
@@ -250,17 +307,24 @@ export class GQLAuth {
    * @param usr User to sanitize
    * @returns User with sensitive information sanitized
    */
-  userToPublic = (usr?: User | null) => {
+  userToPublic = (usr?: UserWithAllIncludes | null) => {
     if (!usr) return null;
     usr.accountId &&= "";
-    //usr.serverIds &&= [];
-    (usr as any).servers &&= [];
-    //usr.groupChatIds &&= [];
-    (usr as any).groupChats &&= [];
-    //usr.friendIds &&= [];
-    (usr as any).ownedServers &&= [];
+    usr.account &&= {} as typeof usr.account;
+    usr.friends &&= [];
+    usr.servers &&= [];
+    usr.ownedServers &&= [];
+    usr.groupChats &&= [];
+    usr.serverUsers &&= [];
     return usr;
   };
+
+  serverUserToPublic = (usr: ServerUserWithIncludes) => {
+    usr.user &&= {} as typeof usr.user;
+    //usr.userId &&= BigInt(0);
+    return usr;
+  };
+
   /**
    * Sanitizes Server of sensitive information and returns the result for public consumption
    * @param ser Server to sanitize
