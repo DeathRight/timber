@@ -28,6 +28,14 @@ export function intersectIds(a: BigInt[], b: BigInt[]) {
 }
 
 /**
+ * Returns `str` with only the first letter uppercased
+ */
+export function properNoun(str: string) {
+  const s = str.toLowerCase();
+  return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
+/**
  * Iterates over all keys of `obj2` and if the values are not null or undefined, overwrites/adds them in `obj1`
  */
 export function assignIfDefined<T extends Record<any, any>>(

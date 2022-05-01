@@ -1,137 +1,26 @@
-import { Account, Domain, Prisma, Room, Server, User } from '@prisma/client';
+import { Account, Domain, Room, Server, User } from '@prisma/client';
 import { DecodedIdToken } from 'firebase-admin/lib/auth/token-verifier';
 
 import { RolePermEnumMap, RolePermEnumMapReturn, RolePermEnumsLength, RolePermEnumsType } from '../util/role';
 import { Context } from './context';
+import {
+  AccountWithIncludes,
+  DomainWithIncludes,
+  PermissionUtility,
+  RoomWithIncludes,
+  ServerUserWithIncludes,
+  ServerWithIncludes,
+  UserWithAllIncludes,
+  UserWithIncludes,
+} from './interfaces';
 
-/**
- * Permission helpers
- */
-interface PermissionHelper<
-  T extends Record<string, any>,
-  E extends keyof Pick<
-    RolePermEnumsType,
-    "serverDetails" | "domainDetails" | "roomDetails"
-  >
-> {
-  /**
-   * Sanitizes of sensitive information and returns the result for public consumption
-   */
-  toPublic: () => T;
-  /**
-   * Whether client can read resource
-   */
-  canRead: () => boolean;
-  /**
-   * List of locally non-sensitive properties of resource user can update
-   */
-  canUpdate: () => RolePermEnumMapReturn<E, true | false>;
-  /**
-   * Whether client can delete resource
-   */
-  canDelete: () => boolean;
-  /**
-   * Whether client can create sub-resources of resource (e.g.: domains, rooms)
-   */
-  canCreateChild: () => boolean;
-  /**
-   * Whether client can delete sub-resources of resource (e.g.: domains, rooms)
-   */
-  canDeleteChild: () => boolean;
-}
-type PermissionUtility<
-  T extends { [index: string]: any; id: bigint | string },
-  E extends keyof Pick<
-    RolePermEnumsType,
-    "serverDetails" | "domainDetails" | "roomDetails"
-  >
-> = {
-  (r: T["id"]): Pick<PermissionHelper<T, E>, "canRead">;
-  (r: T): PermissionHelper<T, E>;
-};
-/* -------------------------------------------------------------------------- */
-/*                                Type helpers                                */
-/* -------------------------------------------------------------------------- */
-export const userWithIncludes = Prisma.validator<Prisma.UserArgs>()({
-  include: {
-    servers: { select: { id: true } },
-    friends: { select: { id: true } },
-    groupChats: { select: { id: true } },
-    serverUsers: {
-      select: { id: true, serverId: true },
-      include: { roles: true },
-    },
-  },
-});
-export type UserWithIncludes = Prisma.UserGetPayload<typeof userWithIncludes>;
-
-export const userWithAllIncludes = Prisma.validator<Prisma.UserArgs>()({
-  include: {
-    account: true,
-    servers: true,
-    friends: true,
-    groupChats: true,
-    serverUsers: true,
-    ownedServers: true,
-  },
-});
-export type UserWithAllIncludes = Prisma.UserGetPayload<
-  typeof userWithAllIncludes
->;
-
-export const serverUserWithIncludes = Prisma.validator<Prisma.ServerUserArgs>()(
-  {
-    include: {
-      user: true,
-      server: true,
-      roles: true,
-    },
-  }
-);
-export type ServerUserWithIncludes = Prisma.ServerUserGetPayload<
-  typeof serverUserWithIncludes
->;
-
-const serverWithUserIds = Prisma.validator<Prisma.ServerArgs>()({
-  include: { users: { select: { id: true } } },
-});
-export type ServerWithUserIds = Prisma.ServerGetPayload<
-  typeof serverWithUserIds
->;
-
-export const serverWithIncludes = Prisma.validator<Prisma.ServerArgs>()({
-  include: {
-    users: true,
-    domains: true,
-    start: true,
-    owner: true,
-    serverUsers: true,
-    roles: true,
-  },
-});
-export type ServerWithIncludes = Prisma.ServerGetPayload<
-  typeof serverWithIncludes
->;
-
-export const domainWithIncludes = Prisma.validator<Prisma.DomainArgs>()({
-  include: { server: true, start: true, rooms: true },
-});
-export type DomainWithIncludes = Prisma.DomainGetPayload<
-  typeof domainWithIncludes
->;
-
-export const roomWithIncludes = Prisma.validator<Prisma.RoomArgs>()({
-  include: { domain: true },
-});
-export type RoomWithIncludes = Prisma.RoomGetPayload<typeof roomWithIncludes>;
-/* ---------------------------- End type helpers ---------------------------- */
 /**
  * Auth helper class
  */
 export class GQLAuth {
   token: DecodedIdToken;
   accountId: Account["id"];
-  account: Account;
+  account: AccountWithIncludes;
   user: UserWithIncludes;
   prisma: Context["prisma"];
 
@@ -303,6 +192,24 @@ export class GQLAuth {
   };
 
   /**
+   * Permission methods for serverUsers
+   */
+  serverUser = (su: ServerUserWithIncludes) => {
+    const perms = this.getPermissions(su.serverId, "modPerms");
+    return {
+      /**
+       * Whether client can update non-sensitive information of ServerUsers
+       */
+      canUpdate: () => perms.EDIT,
+      canDelete: () => perms.DELETE,
+      canBan: () => perms.BAN,
+      canInvite: () => perms.INVITE,
+      canMute: () => perms.MUTE,
+      canAlterRoles: () => perms.ROLE,
+    };
+  };
+
+  /**
    * Sanitizes User of sensitive information and returns the result for public consumption
    * @param usr User to sanitize
    * @returns User with sensitive information sanitized
@@ -345,7 +252,7 @@ export class GQLAuth {
 
   constructor(
     token: DecodedIdToken,
-    account: Account,
+    account: AccountWithIncludes,
     user: UserWithIncludes,
     prismaClient: Context["prisma"]
   ) {

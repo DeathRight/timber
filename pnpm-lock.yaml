@@ -36,6 +36,7 @@ specifiers:
   ts-node: ^10.7.0
   tsconfig-paths: ^3.14.0
   typescript: ^4.5.5
+  unique-names-generator: ^4.7.1
 
 dependencies:
   '@prisma/client': 3.11.1_prisma@3.11.1
@@ -60,6 +61,7 @@ dependencies:
   nexus-prisma: 0.35.0_95c4b2dd2bb618010658f9bdd7ef6643
   pg: 8.7.3
   simpleflakes: 2.2.2
+  unique-names-generator: 4.7.1
 
 devDependencies:
   '@swc/core': 1.2.159
@@ -4155,6 +4157,11 @@ packages:
   /undici/4.14.1:
     resolution: {integrity: sha512-WJ+g+XqiZcATcBaUeluCajqy4pEDcQfK1vy+Fo+bC4/mqXI9IIQD/XWHLS70fkGUT6P52Drm7IFslO651OdLPQ==}
     engines: {node: '>=12.18'}
+    dev: false
+
+  /unique-names-generator/4.7.1:
+    resolution: {integrity: sha512-lMx9dX+KRmG8sq6gulYYpKWZc9RlGsgBR6aoO8Qsm3qvkSJ+3rAymr+TnV8EDMrIrwuFJ4kruzMWM/OpYzPoow==}
+    engines: {node: '>=8'}
     dev: false
 
   /unique-string/2.0.0:

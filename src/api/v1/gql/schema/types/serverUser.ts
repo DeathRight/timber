@@ -1,8 +1,10 @@
+import { Prisma } from '@prisma/client';
 import mercurius from 'mercurius';
-import { inputObjectType, objectType, queryField } from 'nexus';
+import { inputObjectType, mutationField, nonNull, nullable, objectType, queryField, subscriptionField } from 'nexus';
 import { ServerUser } from 'nexus-prisma';
 
-import { serverUserWithIncludes } from '../../util/auth';
+import { ServerUserWithIncludes, serverUserWithIncludes } from '../../util/interfaces';
+import { topic } from '../../util/topics';
 
 const u = ServerUser;
 
@@ -83,33 +85,110 @@ export const serverUserByIdQuery = queryField("serverUserById", {
   },
 });
 
-export const serverUserByUserAndServerIdQuery = queryField(
-  "serverUserByUserAndServerId",
-  {
-    type: "ServerUser",
-    description:
-      "Returns ServerUser by `uId` and `sId`. Sensitive fields will be empty unless base user is current user",
-    args: {
-      uId: u.userId.type,
-      sId: u.serverId.type,
-    },
-    async resolve(_, args, ctx) {
-      // If client isn't in the server, they cannot access any information
-      if (!ctx.auth.isInServer(args.sId))
-        throw new mercurius.ErrorWithProps("Invalid permissions!");
+export const serverUserByServerIdQuery = queryField("serverUserByServerId", {
+  type: "ServerUser",
+  description:
+    "Returns ServerUser by `uId` and `sId`. Sensitive fields will be empty unless base user is current user",
+  args: {
+    uId: u.userId.type,
+    sId: u.serverId.type,
+  },
+  async resolve(_, args, ctx) {
+    // If client isn't in the server, they cannot access any information
+    if (!ctx.auth.isInServer(args.sId))
+      throw new mercurius.ErrorWithProps("Invalid permissions!");
 
-      let usr = await ctx.prisma.serverUser.findUnique({
-        where: {
-          userId_serverId: { serverId: args.sId, userId: args.uId },
-        },
-        ...serverUserWithIncludes,
-      });
-      if (!usr) throw new mercurius.ErrorWithProps("Invalid ID");
+    let usr = await ctx.prisma.serverUser.findUnique({
+      where: {
+        userId_serverId: { serverId: args.sId, userId: args.uId },
+      },
+      ...serverUserWithIncludes,
+    });
+    if (!usr) throw new mercurius.ErrorWithProps("Invalid ID");
 
-      if (!ctx.auth.isClient(usr.userId)) {
-        usr = ctx.auth.serverUserToPublic(usr);
-      }
-      return usr;
-    },
-  }
-);
+    if (!ctx.auth.isClient(usr.userId)) {
+      usr = ctx.auth.serverUserToPublic(usr);
+    }
+    return usr;
+  },
+});
+
+/* -------------------------------- Mutations ------------------------------- */
+export const updateServerUser = mutationField("updateServerUser", {
+  type: "ServerUser",
+  description: "Update non-sensitive information of ServerUser with ID `id`",
+  args: {
+    id: u.id.type,
+    data: nonNull(ServerUserUpdateInput),
+  },
+  async resolve(_, args, ctx) {
+    const { displayName, avatar } = args.data;
+
+    const usr = await ctx.prisma.serverUser.findUnique({
+      where: { id: args.id },
+      ...serverUserWithIncludes,
+    });
+    if (!usr) throw new mercurius.ErrorWithProps("Invalid ID");
+    if (!ctx.auth.isInServer(usr.server.id))
+      throw new mercurius.ErrorWithProps("Invalid permissions!");
+
+    const perms = ctx.auth.serverUser(usr);
+    if (!perms.canUpdate())
+      throw new mercurius.ErrorWithProps("Invalid permissions!");
+
+    const data = {
+      displayName: displayName ?? undefined,
+      avatar: avatar ?? undefined,
+    };
+    const newUsr = await ctx.prisma.serverUser.update({
+      where: { id: args.id },
+      data,
+    });
+
+    const userTopic = topic("ServerUser").id(args.id).changed;
+    ctx.pubsub.publish({
+      topic: userTopic.label,
+      payload: userTopic.payload(data),
+    });
+
+    return newUsr;
+  },
+});
+
+/* ------------------------------ Subscriptions ----------------------------- */
+export const serverUserSnapshot = subscriptionField("serverUserSnapshot", {
+  type: "ServerUser",
+  description:
+    "Subscribes to changes for a ServerUser (snapshots), first attempting to return the current snapshot. `sid` is optional serverId. If `sid` is present, `uid` should be userId, otherwise, the ID of the ServerUser.",
+  args: {
+    uid: u.id.type,
+    sid: nullable("BigInt"),
+  },
+  async subscribe(_root, args, ctx, _info) {
+    const { uid, sid } = args;
+    const where: Prisma.ServerUserWhereUniqueInput = sid
+      ? { userId_serverId: { userId: uid, serverId: sid } }
+      : { id: uid };
+
+    const usr = await ctx.prisma.serverUser.findUnique({
+      where: where,
+      ...serverUserWithIncludes,
+    });
+    if (!usr) {
+      throw new mercurius.ErrorWithProps(
+        "Unable to fetch snapshot for subscription"
+      );
+    }
+
+    return await topic("ServerUser")
+      .id(usr.id)
+      .changed.snapshot(usr, ctx.pubsub);
+  },
+  resolve(eventData: ServerUserWithIncludes, args, ctx) {
+    if (!ctx.auth.isClient(eventData.userId)) {
+      return ctx.auth.serverUserToPublic(eventData);
+    } else {
+      return eventData;
+    }
+  },
+});

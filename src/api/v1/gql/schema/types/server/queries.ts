@@ -1,7 +1,7 @@
 import mercurius from 'mercurius';
 import { queryField } from 'nexus';
 
-import { serverWithIncludes } from '../../../util/auth';
+import { serverWithIncludes } from '../../../util/interfaces';
 import { s } from './constants';
 
 export const serverById = queryField("serverById", {

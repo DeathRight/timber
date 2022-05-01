@@ -2,7 +2,7 @@ import { topic } from '@api/v1/gql/util/topics';
 import mercurius from 'mercurius';
 import { subscriptionField } from 'nexus';
 
-import { ServerWithIncludes, serverWithIncludes } from '../../../util/auth';
+import { ServerWithIncludes, serverWithIncludes } from '../../../util/interfaces';
 import { s } from './constants';
 
 export const serverSnapshotSub = subscriptionField("serverSnapshot", {

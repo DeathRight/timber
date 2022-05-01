@@ -1,7 +1,7 @@
 import mercurius from 'mercurius';
 import { queryField } from 'nexus';
 
-import { domainWithIncludes } from '../../../util/auth';
+import { domainWithIncludes } from '../../../util/interfaces';
 import { d } from './constants';
 
 export const domainById = queryField("domainById", {
