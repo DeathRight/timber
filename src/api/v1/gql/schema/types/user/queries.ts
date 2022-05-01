@@ -2,7 +2,7 @@ import { intersectIds } from '@util';
 import mercurius from 'mercurius';
 import { queryField } from 'nexus';
 
-import { userWithAllIncludes } from '../../../util/auth';
+import { userWithAllIncludes } from '../../../util/interfaces';
 import { u } from './constants';
 
 export const userByIdQuery = queryField("userById", {

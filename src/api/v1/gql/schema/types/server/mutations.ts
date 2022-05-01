@@ -4,7 +4,7 @@ import { isAllSame, timberflake } from '@util';
 import mercurius from 'mercurius';
 import { mutationField, nonNull } from 'nexus';
 
-import { serverWithIncludes } from '../../../util/auth';
+import { serverWithIncludes } from '../../../util/interfaces';
 import { s } from './constants';
 import { ServerCreateInput, ServerUpdateInput } from './inputs';
 

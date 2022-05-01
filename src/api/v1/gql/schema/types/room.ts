@@ -4,7 +4,7 @@ import mercurius from 'mercurius';
 import { inputObjectType, mutationField, nonNull, objectType, queryField, subscriptionField } from 'nexus';
 import { Room } from 'nexus-prisma';
 
-import { domainWithIncludes } from '../../util/auth';
+import { domainWithIncludes } from '../../util/interfaces';
 import { topic } from '../../util/topics';
 
 const r = Room;

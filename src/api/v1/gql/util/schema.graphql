@@ -188,6 +188,14 @@ enum InviteType {
   Server
 }
 
+input InviteUpdateInput {
+  """Expiration ISO date"""
+  expiresAt: DateTime
+
+  """IDs of who can view the invite. Everyone if empty"""
+  recipientIds: [BigInt!]!
+}
+
 """
 The `JSONObject` scalar type represents JSON objects as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf).
 """
@@ -203,8 +211,19 @@ enum ModPermission {
 }
 
 type Mutation {
+  """
+  Accepts an invite and removes client from recipients list if applicable, and if last, deletes invite
+  """
+  acceptInvite(id: BigInt!): Invite
+
   """Creates a domain and updates server to reflect"""
   createDomain(data: DomainCreateInput!): Domain
+
+  """Creates a friend invite to user with ID `uid`"""
+  createFriendInvite(uid: BigInt!): Invite
+
+  """Creates a Group Chat invite with optional expiration date"""
+  createGroupChatInvite(data: InviteCreateInput!): Invite
 
   """Creates a room and updates domain to reflect"""
   createRoom(data: RoomCreateInput!): Room
@@ -218,6 +237,9 @@ type Mutation {
   """Create user on currently logged in account."""
   createUser(data: UserCreateInput!): User
 
+  """Deletes an invite so it is no longer usable"""
+  deleteInvite(id: BigInt!): Invite
+
   """Update non-sensitive information of a domain."""
   updateDomain(data: DomainUpdateInput!, id: BigInt!): Domain
 
@@ -226,6 +248,9 @@ type Mutation {
 
   """Update non-sensitive information of a server."""
   updateServer(data: ServerUpdateInput!, id: BigInt!): Server
+
+  """Update non-sensitive information of ServerUser with ID `id`"""
+  updateServerUser(data: ServerUserUpdateInput!, id: BigInt!): ServerUser
 
   """
   Update non-sensitive information of currently logged in user. `lastSeen` will get updated automatically unless a value is provided; if null, does nothing.
@@ -256,6 +281,14 @@ type Query {
   """Returns domain with `id`"""
   domainById(id: BigInt!): Domain
 
+  """Gets invite by id `id`. Will throw an error if not on recipients list"""
+  getInviteById(id: BigInt!): Invite
+
+  """
+  Gets a list of all invites by partyId `id`. InviteType `type` must be specified for permission check
+  """
+  getInvitesByPartyId(id: BigInt!, type: InviteType!): [Invite]
+
   """Returns room with `id`"""
   roomById(id: BigInt!): Room
 
@@ -270,7 +303,7 @@ type Query {
   """
   Returns ServerUser by `uId` and `sId`. Sensitive fields will be empty unless base user is current user
   """
-  serverUserByUserAndServerId(sId: BigInt!, uId: BigInt!): ServerUser
+  serverUserByServerId(sId: BigInt!, uId: BigInt!): ServerUser
 
   """Returns a JSON enum object of TopicPayloadType"""
   topicPayloadTypes: TopicPayloadTypes
@@ -525,6 +558,11 @@ type Subscription {
   Subscribes to changes for a server (snapshots), first attempting to return the current snapshot
   """
   serverSnapshot(id: BigInt!): Server
+
+  """
+  Subscribes to changes for a ServerUser (snapshots), first attempting to return the current snapshot. `sid` is optional serverId. If `sid` is present, `uid` should be userId, otherwise, the ID of the ServerUser.
+  """
+  serverUserSnapshot(sid: BigInt, uid: BigInt!): ServerUser
 
   """
   Subscribes to changes for a user (snapshots), first attempting to return the current snapshot

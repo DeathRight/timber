@@ -1,13 +1,22 @@
-import { Account, Domain, GroupChat, Invite, Prisma, Room, Server, User } from '@prisma/client';
+import { Account, Invite, Prisma } from '@prisma/client';
 import { PubSub } from 'mercurius';
 
-import { DomainWithIncludes, RoomWithIncludes, ServerWithIncludes, UserWithIncludes } from './auth';
+import {
+  DomainWithIncludes,
+  GroupChatWithIncludes,
+  RoomWithIncludes,
+  ServerUserWithIncludes,
+  ServerWithIncludes,
+  UserWithAllIncludes,
+  UserWithIncludes,
+} from './interfaces';
 
 type Topics = {
   User:
     | Prisma.UserCreateArgs["data"]
     | Prisma.UserUpdateArgs["data"]
-    | Partial<UserWithIncludes>;
+    | Partial<UserWithIncludes>
+    | Partial<UserWithAllIncludes>;
   Account: Partial<Account>;
   Server:
     | Prisma.ServerCreateArgs["data"]
@@ -21,8 +30,18 @@ type Topics = {
     | Prisma.RoomCreateArgs["data"]
     | Prisma.RoomUpdateArgs["data"]
     | Partial<RoomWithIncludes>;
-  GroupChat: Partial<GroupChat>;
-  Invite: Partial<Invite>;
+  GroupChat:
+    | Prisma.GroupChatCreateArgs["data"]
+    | Prisma.GroupChatUpdateArgs["data"]
+    | Partial<GroupChatWithIncludes>;
+  Invite:
+    | Prisma.InviteCreateArgs["data"]
+    | Prisma.InviteUpdateArgs["data"]
+    | Partial<Invite>;
+  ServerUser:
+    | Prisma.ServerUserCreateArgs
+    | Prisma.ServerUserUpdateArgs
+    | Partial<ServerUserWithIncludes>;
 };
 
 export enum TopicPayloadType {

@@ -2,6 +2,7 @@ import { topic } from '@api/v1/gql/util/topics';
 import { timberflake } from '@util';
 import { mutationField, nonNull } from 'nexus';
 
+import { userWithAllIncludes } from '../../../util/interfaces';
 import { UserCreateInput, UserUpdateInput } from './inputs';
 
 export const updateUser = mutationField("updateUser", {
@@ -54,7 +55,7 @@ export const createUser = mutationField("createUser", {
 
     const user = await ctx.prisma.user.create({
       data: data,
-      include: { account: true },
+      ...userWithAllIncludes,
     });
 
     const userTopic = topic("User").id(data.id).created;

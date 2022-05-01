@@ -137,6 +137,10 @@ export interface NexusGenInputs {
     expiresAt?: NexusGenScalars['DateTime'] | null; // DateTime
     partyId: NexusGenScalars['BigInt']; // BigInt!
   }
+  InviteUpdateInput: { // input type
+    expiresAt?: NexusGenScalars['DateTime'] | null; // DateTime
+    recipientIds: NexusGenScalars['BigInt'][]; // [BigInt!]!
+  }
   RoomCreateInput: { // input type
     displayName: string; // String!
     domainId: NexusGenScalars['BigInt']; // BigInt!
@@ -355,22 +359,29 @@ export interface NexusGenFieldTypes {
     type: NexusGenEnums['InviteType']; // InviteType!
   }
   Mutation: { // field return type
+    acceptInvite: NexusGenRootTypes['Invite'] | null; // Invite
     createDomain: NexusGenRootTypes['Domain'] | null; // Domain
+    createFriendInvite: NexusGenRootTypes['Invite'] | null; // Invite
+    createGroupChatInvite: NexusGenRootTypes['Invite'] | null; // Invite
     createRoom: NexusGenRootTypes['Room'] | null; // Room
     createServer: NexusGenRootTypes['Server'] | null; // Server
     createServerInvite: NexusGenRootTypes['Invite'] | null; // Invite
     createUser: NexusGenRootTypes['User'] | null; // User
+    deleteInvite: NexusGenRootTypes['Invite'] | null; // Invite
     updateDomain: NexusGenRootTypes['Domain'] | null; // Domain
     updateRoom: NexusGenRootTypes['Room'] | null; // Room
     updateServer: NexusGenRootTypes['Server'] | null; // Server
+    updateServerUser: NexusGenRootTypes['ServerUser'] | null; // ServerUser
     updateUser: NexusGenRootTypes['User'] | null; // User
   }
   Query: { // field return type
     domainById: NexusGenRootTypes['Domain'] | null; // Domain
+    getInviteById: NexusGenRootTypes['Invite'] | null; // Invite
+    getInvitesByPartyId: Array<NexusGenRootTypes['Invite'] | null> | null; // [Invite]
     roomById: NexusGenRootTypes['Room'] | null; // Room
     serverById: NexusGenRootTypes['Server'] | null; // Server
     serverUserById: NexusGenRootTypes['ServerUser'] | null; // ServerUser
-    serverUserByUserAndServerId: NexusGenRootTypes['ServerUser'] | null; // ServerUser
+    serverUserByServerId: NexusGenRootTypes['ServerUser'] | null; // ServerUser
     topicPayloadTypes: NexusGenScalars['TopicPayloadTypes'] | null; // TopicPayloadTypes
     userById: NexusGenRootTypes['User'] | null; // User
     userByName: NexusGenRootTypes['User'] | null; // User
@@ -434,6 +445,7 @@ export interface NexusGenFieldTypes {
     domainSnapshot: NexusGenRootTypes['Domain'] | null; // Domain
     roomSnapshot: NexusGenRootTypes['Room'] | null; // Room
     serverSnapshot: NexusGenRootTypes['Server'] | null; // Server
+    serverUserSnapshot: NexusGenRootTypes['ServerUser'] | null; // ServerUser
     userSnapshot: NexusGenRootTypes['User'] | null; // User
   }
   User: { // field return type
@@ -497,22 +509,29 @@ export interface NexusGenFieldTypeNames {
     type: 'InviteType'
   }
   Mutation: { // field return type name
+    acceptInvite: 'Invite'
     createDomain: 'Domain'
+    createFriendInvite: 'Invite'
+    createGroupChatInvite: 'Invite'
     createRoom: 'Room'
     createServer: 'Server'
     createServerInvite: 'Invite'
     createUser: 'User'
+    deleteInvite: 'Invite'
     updateDomain: 'Domain'
     updateRoom: 'Room'
     updateServer: 'Server'
+    updateServerUser: 'ServerUser'
     updateUser: 'User'
   }
   Query: { // field return type name
     domainById: 'Domain'
+    getInviteById: 'Invite'
+    getInvitesByPartyId: 'Invite'
     roomById: 'Room'
     serverById: 'Server'
     serverUserById: 'ServerUser'
-    serverUserByUserAndServerId: 'ServerUser'
+    serverUserByServerId: 'ServerUser'
     topicPayloadTypes: 'TopicPayloadTypes'
     userById: 'User'
     userByName: 'User'
@@ -576,6 +595,7 @@ export interface NexusGenFieldTypeNames {
     domainSnapshot: 'Domain'
     roomSnapshot: 'Room'
     serverSnapshot: 'Server'
+    serverUserSnapshot: 'ServerUser'
     userSnapshot: 'User'
   }
   User: { // field return type name
@@ -596,8 +616,17 @@ export interface NexusGenFieldTypeNames {
 
 export interface NexusGenArgTypes {
   Mutation: {
+    acceptInvite: { // args
+      id: NexusGenScalars['BigInt']; // BigInt!
+    }
     createDomain: { // args
       data: NexusGenInputs['DomainCreateInput']; // DomainCreateInput!
+    }
+    createFriendInvite: { // args
+      uid: NexusGenScalars['BigInt']; // BigInt!
+    }
+    createGroupChatInvite: { // args
+      data: NexusGenInputs['InviteCreateInput']; // InviteCreateInput!
     }
     createRoom: { // args
       data: NexusGenInputs['RoomCreateInput']; // RoomCreateInput!
@@ -611,6 +640,9 @@ export interface NexusGenArgTypes {
     createUser: { // args
       data: NexusGenInputs['UserCreateInput']; // UserCreateInput!
     }
+    deleteInvite: { // args
+      id: NexusGenScalars['BigInt']; // BigInt!
+    }
     updateDomain: { // args
       data: NexusGenInputs['DomainUpdateInput']; // DomainUpdateInput!
       id: NexusGenScalars['BigInt']; // BigInt!
@@ -623,6 +655,10 @@ export interface NexusGenArgTypes {
       data: NexusGenInputs['ServerUpdateInput']; // ServerUpdateInput!
       id: NexusGenScalars['BigInt']; // BigInt!
     }
+    updateServerUser: { // args
+      data: NexusGenInputs['ServerUserUpdateInput']; // ServerUserUpdateInput!
+      id: NexusGenScalars['BigInt']; // BigInt!
+    }
     updateUser: { // args
       data: NexusGenInputs['UserUpdateInput']; // UserUpdateInput!
     }
@@ -630,6 +666,13 @@ export interface NexusGenArgTypes {
   Query: {
     domainById: { // args
       id: NexusGenScalars['BigInt']; // BigInt!
+    }
+    getInviteById: { // args
+      id: NexusGenScalars['BigInt']; // BigInt!
+    }
+    getInvitesByPartyId: { // args
+      id: NexusGenScalars['BigInt']; // BigInt!
+      type: NexusGenEnums['InviteType']; // InviteType!
     }
     roomById: { // args
       id: NexusGenScalars['BigInt']; // BigInt!
@@ -640,7 +683,7 @@ export interface NexusGenArgTypes {
     serverUserById: { // args
       id: NexusGenScalars['BigInt']; // BigInt!
     }
-    serverUserByUserAndServerId: { // args
+    serverUserByServerId: { // args
       sId: NexusGenScalars['BigInt']; // BigInt!
       uId: NexusGenScalars['BigInt']; // BigInt!
     }
@@ -663,6 +706,10 @@ export interface NexusGenArgTypes {
     }
     serverSnapshot: { // args
       id: NexusGenScalars['BigInt']; // BigInt!
+    }
+    serverUserSnapshot: { // args
+      sid?: NexusGenScalars['BigInt'] | null; // BigInt
+      uid: NexusGenScalars['BigInt']; // BigInt!
     }
     userSnapshot: { // args
       uid: NexusGenScalars['BigInt']; // BigInt!

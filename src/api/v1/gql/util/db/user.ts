@@ -1,6 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 
-import { userWithIncludes } from '../auth';
+import { userWithIncludes } from '../interfaces';
 
 export const getUserFromAccount = async (
   prisma: PrismaClient,
