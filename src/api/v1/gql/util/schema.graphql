@@ -16,13 +16,12 @@ type Account {
   disabled: Boolean!
   email: EmailAddress
 
-  """Snowflake (simpleflake) based BigInt ID"""
+  """Firebase Auth ID"""
   id: ID!
   password: String
 
   """ISO date this row was last updated"""
   updatedAt: DateTime!
-  userIds: [BigInt!]!
   users: [User!]!
 }
 
