@@ -1,10 +1,17 @@
-import { InviteType } from '@prisma/client';
+import { InviteType, Prisma } from '@prisma/client';
 import { timberflake } from '@util';
 import mercurius from 'mercurius';
 import { inputObjectType, list, mutationField, nonNull, objectType, queryField, unionType } from 'nexus';
 import { Invite } from 'nexus-prisma';
 
-import { serverUserWithIncludes, serverWithIncludes, userWithAllIncludes } from '../../util/interfaces';
+import {
+  groupChatWithIncludes,
+  serverUserWithIncludes,
+  serverWithIncludes,
+  userWithAllIncludes,
+  userWithIncludes,
+} from '../../util/interfaces';
+import { topic } from '../../util/topics';
 
 export const PartyUnion = unionType({
   name: "Party",
@@ -265,6 +272,167 @@ export const acceptInvite = mutationField("acceptInvite", {
     "Accepts an invite and removes client from recipients list if applicable, and if last, deletes invite",
   args: { id: i.id.type },
   async resolve(_, args, ctx) {
-    // TODO
+    const uid = ctx.auth.user.id;
+    const source = await ctx.prisma.invite.findUnique({
+      where: { id: args.id },
+    });
+    if (!source) {
+      throw new mercurius.ErrorWithProps("Unable to fetch invite!");
+    }
+
+    const type = source.type;
+    if (source.recipientIds.length === 0 || source.recipientIds.includes(uid)) {
+      switch (type) {
+        case "Server":
+          if (!ctx.auth.isInServer(source.partyId)) {
+            // Create new serveruser and link it and client with server
+            const serverUser: Prisma.ServerUserCreateWithoutServerInput = {
+              id: timberflake(),
+              user: { connect: { id: uid } },
+            };
+            const server = await ctx.prisma.server.update({
+              where: { id: source.partyId },
+              data: {
+                users: { connect: { id: uid } },
+                serverUsers: { create: serverUser },
+              },
+              ...serverWithIncludes,
+            });
+
+            // Publish changes and update session
+            const newUser = await ctx.prisma.user.findUnique({
+              where: { id: uid },
+              ...userWithIncludes,
+            });
+            const plServer = {
+              users: [server.users.find((v) => v.id === uid)!],
+              serverUsers: [
+                server.serverUsers.find((v) => v.id === serverUser.id)!,
+              ],
+            };
+
+            if (newUser) {
+              ctx.auth.updateUser(newUser, ctx);
+              const userTopic = topic("User").id(uid).childAdded;
+              ctx.pubsub.publish({
+                topic: userTopic.label,
+                payload: userTopic.payload({
+                  serverUsers: plServer.serverUsers,
+                  servers: [server],
+                }),
+              });
+            }
+
+            const serverTopic = topic("Server").id(source.partyId).changed;
+            ctx.pubsub.publish({
+              topic: serverTopic.label,
+              payload: serverTopic.payload(plServer),
+            });
+          }
+          break;
+        case "GroupChat":
+          if (!ctx.auth.isInGroupChat(source.partyId)) {
+            const gc = await ctx.prisma.groupChat.update({
+              where: { id: source.partyId },
+              data: {
+                users: { connect: { id: uid } },
+              },
+              ...groupChatWithIncludes,
+            });
+
+            // Publish changes and update session
+            const newUser = await ctx.prisma.user.findUnique({
+              where: { id: uid },
+              ...userWithIncludes,
+            });
+            if (newUser) {
+              ctx.auth.updateUser(newUser, ctx);
+              const userTopic = topic("User").id(uid).childAdded;
+              ctx.pubsub.publish({
+                topic: userTopic.label,
+                payload: userTopic.payload({
+                  groupChats: [gc],
+                }),
+              });
+            }
+
+            const gcTopic = topic("GroupChat").id(source.partyId).childAdded;
+            ctx.pubsub.publish({
+              topic: gcTopic.label,
+              payload: gcTopic.payload({
+                users: [gc.users.find((v) => v.id === uid)!],
+              }),
+            });
+          }
+          break;
+        case "Friend":
+          if (!ctx.auth.user.friends.includes({ id: source.partyId })) {
+            // If not already friends
+            const newUser = await ctx.prisma.user.update({
+              where: { id: uid },
+              data: { friends: { connect: { id: source.partyId } } },
+              ...userWithIncludes,
+            });
+            const friend = await ctx.prisma.user.findUnique({
+              where: { id: source.partyId },
+              // Include only client in 'friends'
+              include: { friends: { where: { id: uid } } },
+            });
+            const { friends, ...plFriend } = friend!; // Separate 'friends' property from payload for client pub
+
+            // Publish changes and update session
+            ctx.auth.updateUser(newUser, ctx);
+            const userTopic = topic("User").id(uid).childAdded;
+            ctx.pubsub.publish({
+              topic: userTopic.label,
+              payload: userTopic.payload({
+                friends: [plFriend],
+              }),
+            });
+
+            const friendTopic = topic("User").id(source.partyId).childAdded;
+            ctx.pubsub.publish({
+              topic: friendTopic.label,
+              payload: friendTopic.payload({
+                friends,
+              }),
+            });
+          }
+          break;
+      }
+
+      if (source.recipientIds.length === 1) {
+        // If client was last recipient, delete invite
+        const invTopic = topic("Invite").id(args.id).deleted;
+        ctx.pubsub.publish({
+          topic: invTopic.label,
+          payload: null,
+        });
+
+        return await ctx.prisma.invite.delete({ where: { id: args.id } });
+      } else if (source.recipientIds.length > 1) {
+        // Remove client from recipients and update
+        const rids = source.recipientIds;
+        const index = rids.findIndex((id) => id === uid);
+        rids.splice(index, 1);
+
+        const newInv = await ctx.prisma.invite.update({
+          where: { id: args.id },
+          data: { recipientIds: rids },
+        });
+
+        const invTopic = topic("Invite").id(args.id).childRemoved;
+        ctx.pubsub.publish({
+          topic: invTopic.label,
+          payload: invTopic.payload({ recipientIds: [uid] }),
+        });
+
+        return newInv;
+      }
+    } else {
+      throw new mercurius.ErrorWithProps("Invalid permissions!");
+    }
+
+    return source; // Make TS happy. Will never be reached.
   },
 });

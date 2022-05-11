@@ -218,7 +218,6 @@ export interface NexusGenObjects {
     id: string; // ID!
     password?: string | null; // String
     updatedAt: NexusGenScalars['DateTime']; // DateTime!
-    userIds: NexusGenScalars['BigInt'][]; // [BigInt!]!
   }
   Domain: { // root type
     createdAt: NexusGenScalars['DateTime']; // DateTime!
@@ -324,7 +323,6 @@ export interface NexusGenFieldTypes {
     id: string; // ID!
     password: string | null; // String
     updatedAt: NexusGenScalars['DateTime']; // DateTime!
-    userIds: NexusGenScalars['BigInt'][]; // [BigInt!]!
     users: NexusGenRootTypes['User'][]; // [User!]!
   }
   Domain: { // field return type
@@ -474,7 +472,6 @@ export interface NexusGenFieldTypeNames {
     id: 'ID'
     password: 'String'
     updatedAt: 'DateTime'
-    userIds: 'BigInt'
     users: 'User'
   }
   Domain: { // field return type name

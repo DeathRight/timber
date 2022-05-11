@@ -4,7 +4,7 @@ import { isAllSame, timberflake } from '@util';
 import mercurius from 'mercurius';
 import { mutationField, nonNull } from 'nexus';
 
-import { serverWithIncludes } from '../../../util/interfaces';
+import { serverWithIncludes, userWithIncludes } from '../../../util/interfaces';
 import { s } from './constants';
 import { ServerCreateInput, ServerUpdateInput } from './inputs';
 
@@ -57,14 +57,7 @@ export const updateServer = mutationField("updateServer", {
         id: args.id,
       },
       data,
-      // * Include all
-      include: {
-        domains: true,
-        users: true,
-        serverUsers: true,
-        roles: true,
-        start: true,
-      },
+      ...serverWithIncludes,
     });
 
     const serverTopic = topic("Server").id(args.id).changed;
@@ -142,17 +135,11 @@ export const createServer = mutationField("createServer", {
           connect: { id: server.id },
         },
       },
-      include: {
-        servers: { select: { id: true } },
-        groupChats: { select: { id: true } },
-        friends: { select: { id: true } },
-        serverUsers: { include: { roles: true } },
-      },
+      ...userWithIncludes,
     });
 
     // Update session and emit update for changed user and created server
-    ctx.req.session.set("user", user);
-    ctx.auth.updateUser(user);
+    ctx.auth.updateUser(user, ctx);
 
     const userTopic = topic("User").id(client.id).childAdded;
     ctx.pubsub.publish({

@@ -1,4 +1,4 @@
-import { Account, Domain, Room, Server, User } from '@prisma/client';
+import { Account, Domain, GroupChat, Room, Server, User } from '@prisma/client';
 import { DecodedIdToken } from 'firebase-admin/lib/auth/token-verifier';
 
 import { RolePermEnumMap, RolePermEnumMapReturn, RolePermEnumsLength, RolePermEnumsType } from '../util/role';
@@ -24,7 +24,14 @@ export class GQLAuth {
   user: UserWithIncludes;
   prisma: Context["prisma"];
 
-  updateUser = (u: typeof this.user) => (this.user = u);
+  updateUser = (u: typeof this.user, ctx: Context) => {
+    ctx.req.session.set("user", u);
+    this.user = u;
+  };
+
+  updateAccount = (a: typeof this.account, ctx: Context) => {
+    ctx.req.session.set("account", a);
+  };
 
   /**
    * Determines whether user ID is a member of client account
@@ -32,13 +39,19 @@ export class GQLAuth {
    * @returns
    */
   isClient = (uid: User["id"]) => {
-    return this.user.id === uid || this.account.userIds.includes(uid);
+    return this.user.id === uid || this.account.users.includes({ id: uid });
   };
   /**
-   * Determines whether user ID is a member of server
+   * Determines whether client is a member of server
    */
   isInServer = (sid: Server["id"]) => {
     return this.user.servers.includes({ id: sid });
+  };
+  /**
+   * Determines whether client is a member of group chat
+   */
+  isInGroupChat = (gid: GroupChat["id"]) => {
+    return this.user.groupChats.includes({ id: gid });
   };
   /**
    * Whether client has an Admin role in the server with ID of `sid`

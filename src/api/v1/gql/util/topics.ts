@@ -2,6 +2,8 @@ import { Account, Invite, Prisma } from '@prisma/client';
 import { PubSub } from 'mercurius';
 
 import {
+  AccountWithAllIncludes,
+  AccountWithIncludes,
   DomainWithIncludes,
   GroupChatWithIncludes,
   RoomWithIncludes,
@@ -17,7 +19,11 @@ type Topics = {
     | Prisma.UserUpdateArgs["data"]
     | Partial<UserWithIncludes>
     | Partial<UserWithAllIncludes>;
-  Account: Partial<Account>;
+  Account:
+    | Prisma.AccountCreateArgs
+    | Prisma.AccountUpdateArgs
+    | Partial<AccountWithIncludes>
+    | Partial<AccountWithAllIncludes>;
   Server:
     | Prisma.ServerCreateArgs["data"]
     | Prisma.ServerUpdateArgs["data"]
@@ -61,6 +67,26 @@ type TopicInput = {
   Account: string;
 };
 
+// For use in 'mergeChanges'
+const findIndexFlexible = <
+  T extends Array<TC>,
+  TC extends { [k: string]: any; id: number } | bigint
+>(
+  obj: T,
+  child: TC
+) => {
+  // Determine if child already exists in array
+  return obj.findIndex((o) => {
+    if (typeof o === "object") {
+      // Ugly, I know. But, we are type safe, TS just can't keep up
+      return o.id === (child as any).id;
+    } else {
+      // o is bigint
+      return o === (child as bigint);
+    }
+  });
+};
+
 /**
  * Merges changes from `obj2` to `obj1` and returns merged object, changing strategy with Arrays based on `t`
  *
@@ -68,7 +94,9 @@ type TopicInput = {
  *
  * ---
  *
- * If TopicPayloadType `t` is `ChildAdded` or `ChildRemoved`, strategy expects a single obj in each Array property (where Array property is i.e. users, domains, etc.).
+ * If TopicPayloadType `t` is `ChildAdded` or `ChildRemoved`,
+ * strategy expects either an ID or a single obj in each Array property
+ * (where Array property is i.e. users, domains, etc.).
  *
  * If `t` is `ChildAdded`, Array property should contain the full child obj.
  *
@@ -82,28 +110,35 @@ const mergeChanges = <T extends Record<any, any>>(
   let ret: Record<any, any> = obj1;
   for (const key in obj2) {
     if (Array.isArray(obj2[key])) {
-      const a1 = obj1[key] as Array<{ [k: string]: any; id: number }>;
+      // Shape of child is either bigint (which should be the ID) or obj with bigint `id` prop
+      const isObj = typeof obj2[key][0] === "object";
+      const a1 = isObj
+        ? (obj1[key] as Array<{ [k: string]: any; id: number }>)
+        : (obj1[key] as Array<bigint>);
       const a2 = obj2[key] as typeof a1;
 
       const sub = a2[0];
+      const found = findIndexFlexible(a1, sub);
       if (t === TopicPayloadType.ChildAdded) {
-        if (!a1.find((o) => o.id === sub.id)) {
-          a1.push(sub);
+        // If not found
+        if (found <= 0) {
+          a1.push(sub as any); // Ugly, I know. But, we are type safe, TS just can't keep up
           ret[key] = a1;
         }
       } else if (t === TopicPayloadType.ChildRemoved) {
-        const found = a1.findIndex((o) => o.id === sub.id);
+        // If found
         if (found >= 0) {
           a1.splice(found, 1);
           ret[key] = a1;
         }
       } else {
         for (const [k, v] of a2.entries()) {
-          const fi = a1.findIndex((o) => o.id === v.id);
+          //const fi = a1.findIndex((o) => o.id === v.id);
+          const fi = findIndexFlexible(a1, v);
           if (fi >= 0) {
-            a1.splice(fi, 1, v);
+            a1.splice(fi, 1, v as any);
           } else {
-            a1.push(v);
+            a1.push(v as any);
           }
         }
       }

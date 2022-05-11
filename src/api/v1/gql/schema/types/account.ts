@@ -7,7 +7,6 @@ export const AccountObject = objectType({
   description: a.$description,
   definition(t) {
     t.field(a.id);
-    t.field(a.userIds);
     t.field(a.users);
     t.field(a.createdAt);
     t.field(a.updatedAt);

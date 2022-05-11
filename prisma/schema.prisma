@@ -23,7 +23,7 @@ enum Provider {
 }
 
 model Account {
-  /// Snowflake (simpleflake) based BigInt ID
+  /// Firebase Auth ID
   id           String    @id
   createdAt    DateTime  @default(now())
   /// ISO date this row was last updated
@@ -36,7 +36,6 @@ model Account {
   authProvider Provider? @default(EMAIL)
   email        String?
   password     String?
-  userIds      BigInt[]
   users        User[]
 }
 
