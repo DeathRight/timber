@@ -241,6 +241,7 @@ export interface NexusGenObjects {
   Invite: { // root type
     expiresAt?: NexusGenScalars['DateTime'] | null; // DateTime
     id: NexusGenScalars['BigInt']; // BigInt!
+    ownerId: NexusGenScalars['BigInt']; // BigInt!
     partyId: NexusGenScalars['BigInt']; // BigInt!
     type: NexusGenEnums['InviteType']; // InviteType!
   }
@@ -352,6 +353,8 @@ export interface NexusGenFieldTypes {
   Invite: { // field return type
     expiresAt: NexusGenScalars['DateTime'] | null; // DateTime
     id: NexusGenScalars['BigInt']; // BigInt!
+    owner: NexusGenRootTypes['User']; // User!
+    ownerId: NexusGenScalars['BigInt']; // BigInt!
     party: NexusGenRootTypes['Party'] | null; // Party
     partyId: NexusGenScalars['BigInt']; // BigInt!
     type: NexusGenEnums['InviteType']; // InviteType!
@@ -441,6 +444,7 @@ export interface NexusGenFieldTypes {
   }
   Subscription: { // field return type
     domainSnapshot: NexusGenRootTypes['Domain'] | null; // Domain
+    inviteSnapshot: NexusGenRootTypes['Invite'] | null; // Invite
     roomSnapshot: NexusGenRootTypes['Room'] | null; // Room
     serverSnapshot: NexusGenRootTypes['Server'] | null; // Server
     serverUserSnapshot: NexusGenRootTypes['ServerUser'] | null; // ServerUser
@@ -501,6 +505,8 @@ export interface NexusGenFieldTypeNames {
   Invite: { // field return type name
     expiresAt: 'DateTime'
     id: 'BigInt'
+    owner: 'User'
+    ownerId: 'BigInt'
     party: 'Party'
     partyId: 'BigInt'
     type: 'InviteType'
@@ -590,6 +596,7 @@ export interface NexusGenFieldTypeNames {
   }
   Subscription: { // field return type name
     domainSnapshot: 'Domain'
+    inviteSnapshot: 'Invite'
     roomSnapshot: 'Room'
     serverSnapshot: 'Server'
     serverUserSnapshot: 'ServerUser'
@@ -696,6 +703,9 @@ export interface NexusGenArgTypes {
   }
   Subscription: {
     domainSnapshot: { // args
+      id: NexusGenScalars['BigInt']; // BigInt!
+    }
+    inviteSnapshot: { // args
       id: NexusGenScalars['BigInt']; // BigInt!
     }
     roomSnapshot: { // args

@@ -164,6 +164,12 @@ type Invite {
 
   """Snowflake (simpleflake) based BigInt ID"""
   id: BigInt!
+
+  """Relation to owner of this group chat"""
+  owner: User!
+
+  """ID of the User that owns this group chat"""
+  ownerId: BigInt!
   party: Party
 
   """ID of what the invite is for"""
@@ -547,6 +553,11 @@ type Subscription {
   Subscribes to changes for a domain (snapshots), first attempting to return the current snapshot
   """
   domainSnapshot(id: BigInt!): Domain
+
+  """
+  Subscribes to changes for an invite (snapshots), first attempting to return the current snapshot. Will return empty if no permission
+  """
+  inviteSnapshot(id: BigInt!): Invite
 
   """
   Subscribes to changes for a room (snapshots), first attempting to return the current snapshot
