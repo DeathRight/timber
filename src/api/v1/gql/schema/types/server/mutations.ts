@@ -40,6 +40,10 @@ export const updateServer = mutationField("updateServer", {
         "You don't have permission to update this server!"
       );
 
+    // Check if startId is a valid child domain
+    if (startId && !server.domains.find((d) => d.id === startId))
+      data.start = undefined;
+
     // Omit keys the user does not have permission to update
     data = {
       displayName: uPerms.NAME ? data.displayName : undefined,

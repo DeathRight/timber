@@ -166,4 +166,9 @@ export const groupChatWithIncludes = Prisma.validator<Prisma.GroupChatArgs>()({
 export type GroupChatWithIncludes = Prisma.GroupChatGetPayload<
   typeof groupChatWithIncludes
 >;
+
+export const roleWithIncludes = Prisma.validator<Prisma.RoleArgs>()({
+  include: { server: true, members: true },
+});
+export type RoleWithIncludes = Prisma.RoleGetPayload<typeof roleWithIncludes>;
 /* ---------------------------- End type helpers ---------------------------- */

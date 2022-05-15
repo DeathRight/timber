@@ -1,7 +1,7 @@
-import { InviteType, Prisma } from '@prisma/client';
+import { Invite as PrismaInvite, InviteType, Prisma } from '@prisma/client';
 import { timberflake } from '@util';
 import mercurius from 'mercurius';
-import { inputObjectType, list, mutationField, nonNull, objectType, queryField, unionType } from 'nexus';
+import { inputObjectType, list, mutationField, nonNull, objectType, queryField, subscriptionField, unionType } from 'nexus';
 import { Invite } from 'nexus-prisma';
 
 import {
@@ -53,6 +53,8 @@ export const InviteObject = objectType({
     });
     t.field(i.partyId);
     t.field(i.expiresAt);
+    t.field(i.ownerId);
+    t.field(i.owner);
   },
 });
 
@@ -71,7 +73,11 @@ export const getInviteById = queryField("getInviteById", {
     }
 
     const rec = inv.recipientIds;
-    if (rec.length > 0 && !rec.find((id) => id === ctx.auth.user.id)) {
+    if (
+      inv.ownerId != ctx.auth.user.id &&
+      rec.length > 0 &&
+      !rec.find((id) => id === ctx.auth.user.id)
+    ) {
       throw new mercurius.ErrorWithProps("Invalid permissions!");
     }
     return inv;
@@ -100,7 +106,7 @@ export const getInvitesByPartyId = queryField("getInvitesByPartyId", {
         if (gc && gc.users.find((u) => u.id === ctx.auth.user.id)) break;
         else throw new mercurius.ErrorWithProps("Invalid permissions!");
       case "Friend":
-        if (ctx.auth.isClient(id)) break;
+        if (id === ctx.auth.user.id) break;
         else throw new mercurius.ErrorWithProps("Invalid permissions!");
     }
     // Passed permissions check
@@ -166,6 +172,7 @@ export const createServerInvite = mutationField("createServerInvite", {
         type: InviteType.Server,
         partyId: args.data.partyId,
         expiresAt: args.data.expiresAt,
+        owner: { connect: { id: ctx.auth.user.id } },
       },
     });
   },
@@ -193,6 +200,7 @@ export const createGroupChatInvite = mutationField("createGroupChatInvite", {
         type: InviteType.GroupChat,
         partyId: args.data.partyId,
         expiresAt: args.data.expiresAt,
+        owner: { connect: { id: ctx.auth.user.id } },
       },
     });
   },
@@ -211,6 +219,7 @@ export const createFriendInvite = mutationField("createFriendInvite", {
         type: InviteType.Friend,
         partyId: ctx.auth.user.id,
         recipientIds: [args.uid],
+        owner: { connect: { id: ctx.auth.user.id } },
       },
     });
   },
@@ -258,7 +267,12 @@ export const deleteInvite = mutationField("deleteInvite", {
           throw new mercurius.ErrorWithProps("Invalid permissions!");
         }
       case "Friend":
-        if (ctx.auth.isClient(source.partyId)) break;
+        // If is requested user or requesting user
+        if (
+          source.partyId === ctx.auth.user.id ||
+          source.ownerId === ctx.auth.user.id
+        )
+          break;
         else throw new mercurius.ErrorWithProps("Invalid permissions!");
     }
     // Valid permissions if we have reached here
@@ -434,5 +448,47 @@ export const acceptInvite = mutationField("acceptInvite", {
     }
 
     return source; // Make TS happy. Will never be reached.
+  },
+});
+
+/* ------------------------------ Subscription ------------------------------ */
+export const inviteSnapshotSub = subscriptionField("inviteSnapshot", {
+  type: "Invite",
+  description:
+    "Subscribes to changes for an invite (snapshots), first attempting to return the current snapshot. Will return empty if no permission",
+  args: {
+    id: i.id.type,
+  },
+  async subscribe(_root, args, ctx, _info) {
+    const inv = await ctx.prisma.invite.findUnique({
+      where: {
+        id: args.id,
+      },
+    });
+    if (!inv) {
+      throw new mercurius.ErrorWithProps(
+        "Unable to fetch snapshot for subscription"
+      );
+    }
+
+    return await topic("Invite").id(args.id).changed.snapshot(inv, ctx.pubsub);
+  },
+  resolve(eventData: PrismaInvite, args, ctx) {
+    if (eventData.recipientIds.length === 0) {
+      return eventData;
+    }
+    // If no recipients, it is public and always permissed
+
+    if (
+      eventData.ownerId != ctx.auth.user.id &&
+      eventData.partyId != ctx.auth.user.id &&
+      !ctx.auth.isInServer(eventData.partyId) &&
+      !ctx.auth.isInGroupChat(eventData.partyId) &&
+      !eventData.recipientIds.includes(args.id)
+    ) {
+      return {} as PrismaInvite; // Return empty unless user has permission
+    } else {
+      return eventData;
+    }
   },
 });

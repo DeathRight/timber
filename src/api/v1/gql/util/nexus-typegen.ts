@@ -130,6 +130,7 @@ export interface NexusGenInputs {
   DomainUpdateInput: { // input type
     description?: string | null; // String
     displayName?: string | null; // String
+    order?: number | null; // Int
     startId?: NexusGenScalars['BigInt'] | null; // BigInt
     thumbnail?: NexusGenScalars['URL'] | null; // URL
   }
@@ -140,6 +141,31 @@ export interface NexusGenInputs {
   InviteUpdateInput: { // input type
     expiresAt?: NexusGenScalars['DateTime'] | null; // DateTime
     recipientIds: NexusGenScalars['BigInt'][]; // [BigInt!]!
+  }
+  RoleCreateInput: { // input type
+    admin?: boolean | null; // Boolean
+    color: NexusGenScalars['HexColorCode']; // HexColorCode!
+    displayName: string; // String!
+    domainCrud?: Array<NexusGenEnums['Permission'] | null> | null; // [Permission]
+    domainDetails?: Array<NexusGenEnums['DetailPermission'] | null> | null; // [DetailPermission]
+    modPerms?: Array<NexusGenEnums['ModPermission'] | null> | null; // [ModPermission]
+    owner?: boolean | null; // Boolean
+    roomCrud?: Array<NexusGenEnums['Permission'] | null> | null; // [Permission]
+    roomDetails?: Array<NexusGenEnums['DetailPermission'] | null> | null; // [DetailPermission]
+    serverDetails?: Array<NexusGenEnums['DetailPermission'] | null> | null; // [DetailPermission]
+    serverId: NexusGenScalars['BigInt']; // BigInt!
+  }
+  RoleUpdateInput: { // input type
+    admin?: boolean | null; // Boolean
+    color?: NexusGenScalars['HexColorCode'] | null; // HexColorCode
+    displayName?: string | null; // String
+    domainCrud?: Array<NexusGenEnums['Permission'] | null> | null; // [Permission]
+    domainDetails?: Array<NexusGenEnums['DetailPermission'] | null> | null; // [DetailPermission]
+    modPerms?: Array<NexusGenEnums['ModPermission'] | null> | null; // [ModPermission]
+    owner?: boolean | null; // Boolean
+    roomCrud?: Array<NexusGenEnums['Permission'] | null> | null; // [Permission]
+    roomDetails?: Array<NexusGenEnums['DetailPermission'] | null> | null; // [DetailPermission]
+    serverDetails?: Array<NexusGenEnums['DetailPermission'] | null> | null; // [DetailPermission]
   }
   RoomCreateInput: { // input type
     displayName: string; // String!
@@ -224,6 +250,7 @@ export interface NexusGenObjects {
     description?: string | null; // String
     displayName: string; // String!
     id: NexusGenScalars['BigInt']; // BigInt!
+    order: number; // Int!
     serverId: NexusGenScalars['BigInt']; // BigInt!
     startId: NexusGenScalars['BigInt']; // BigInt!
     thumbnail?: NexusGenScalars['URL'] | null; // URL
@@ -241,6 +268,7 @@ export interface NexusGenObjects {
   Invite: { // root type
     expiresAt?: NexusGenScalars['DateTime'] | null; // DateTime
     id: NexusGenScalars['BigInt']; // BigInt!
+    ownerId: NexusGenScalars['BigInt']; // BigInt!
     partyId: NexusGenScalars['BigInt']; // BigInt!
     type: NexusGenEnums['InviteType']; // InviteType!
   }
@@ -330,6 +358,7 @@ export interface NexusGenFieldTypes {
     description: string | null; // String
     displayName: string; // String!
     id: NexusGenScalars['BigInt']; // BigInt!
+    order: number; // Int!
     rooms: NexusGenRootTypes['Room'][]; // [Room!]!
     server: NexusGenRootTypes['Server']; // Server!
     serverId: NexusGenScalars['BigInt']; // BigInt!
@@ -352,6 +381,8 @@ export interface NexusGenFieldTypes {
   Invite: { // field return type
     expiresAt: NexusGenScalars['DateTime'] | null; // DateTime
     id: NexusGenScalars['BigInt']; // BigInt!
+    owner: NexusGenRootTypes['User']; // User!
+    ownerId: NexusGenScalars['BigInt']; // BigInt!
     party: NexusGenRootTypes['Party'] | null; // Party
     partyId: NexusGenScalars['BigInt']; // BigInt!
     type: NexusGenEnums['InviteType']; // InviteType!
@@ -376,6 +407,7 @@ export interface NexusGenFieldTypes {
     domainById: NexusGenRootTypes['Domain'] | null; // Domain
     getInviteById: NexusGenRootTypes['Invite'] | null; // Invite
     getInvitesByPartyId: Array<NexusGenRootTypes['Invite'] | null> | null; // [Invite]
+    roleById: NexusGenRootTypes['Role'] | null; // Role
     roomById: NexusGenRootTypes['Room'] | null; // Room
     serverById: NexusGenRootTypes['Server'] | null; // Server
     serverUserById: NexusGenRootTypes['ServerUser'] | null; // ServerUser
@@ -441,6 +473,7 @@ export interface NexusGenFieldTypes {
   }
   Subscription: { // field return type
     domainSnapshot: NexusGenRootTypes['Domain'] | null; // Domain
+    inviteSnapshot: NexusGenRootTypes['Invite'] | null; // Invite
     roomSnapshot: NexusGenRootTypes['Room'] | null; // Room
     serverSnapshot: NexusGenRootTypes['Server'] | null; // Server
     serverUserSnapshot: NexusGenRootTypes['ServerUser'] | null; // ServerUser
@@ -479,6 +512,7 @@ export interface NexusGenFieldTypeNames {
     description: 'String'
     displayName: 'String'
     id: 'BigInt'
+    order: 'Int'
     rooms: 'Room'
     server: 'Server'
     serverId: 'BigInt'
@@ -501,6 +535,8 @@ export interface NexusGenFieldTypeNames {
   Invite: { // field return type name
     expiresAt: 'DateTime'
     id: 'BigInt'
+    owner: 'User'
+    ownerId: 'BigInt'
     party: 'Party'
     partyId: 'BigInt'
     type: 'InviteType'
@@ -525,6 +561,7 @@ export interface NexusGenFieldTypeNames {
     domainById: 'Domain'
     getInviteById: 'Invite'
     getInvitesByPartyId: 'Invite'
+    roleById: 'Role'
     roomById: 'Room'
     serverById: 'Server'
     serverUserById: 'ServerUser'
@@ -590,6 +627,7 @@ export interface NexusGenFieldTypeNames {
   }
   Subscription: { // field return type name
     domainSnapshot: 'Domain'
+    inviteSnapshot: 'Invite'
     roomSnapshot: 'Room'
     serverSnapshot: 'Server'
     serverUserSnapshot: 'ServerUser'
@@ -671,6 +709,9 @@ export interface NexusGenArgTypes {
       id: NexusGenScalars['BigInt']; // BigInt!
       type: NexusGenEnums['InviteType']; // InviteType!
     }
+    roleById: { // args
+      id: NexusGenScalars['BigInt']; // BigInt!
+    }
     roomById: { // args
       id: NexusGenScalars['BigInt']; // BigInt!
     }
@@ -696,6 +737,9 @@ export interface NexusGenArgTypes {
   }
   Subscription: {
     domainSnapshot: { // args
+      id: NexusGenScalars['BigInt']; // BigInt!
+    }
+    inviteSnapshot: { // args
       id: NexusGenScalars['BigInt']; // BigInt!
     }
     roomSnapshot: { // args

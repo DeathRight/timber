@@ -71,6 +71,8 @@ model User {
   ownedServers    Server[]     @relation("ownedServers")
   /// Associated serverUsers for every server
   serverUsers     ServerUser[]
+  /// Relation to owned Invites
+  ownedInvites    Invite[]
 
   /// Array of server IDs the user is a member of
   //serverIds    BigInt[]
@@ -314,4 +316,8 @@ model Invite {
   createdAt    DateTime   @default(now())
   /// ISO date this row was last updated
   updatedAt    DateTime   @updatedAt
+  /// ID of the User that owns this group chat
+  ownerId      BigInt
+  /// Relation to owner of this group chat
+  owner        User       @relation(fields: [ownerId], references: [id])
 }

@@ -15,6 +15,7 @@ export const DomainUpdateInput = inputObjectType({
     t.nullable.url(d.thumbnail.name, {
       description: d.thumbnail.description,
     });
+    t.nullable.int(d.order.name, { description: d.order.description });
   },
 });
 
