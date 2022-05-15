@@ -66,6 +66,9 @@ type Domain {
   """Snowflake (simpleflake) based BigInt ID"""
   id: BigInt!
 
+  """Display order"""
+  order: Int!
+
   """Relation to rooms that this domain contains"""
   rooms: [Room!]!
 
@@ -111,6 +114,9 @@ input DomainUpdateInput {
 
   """Global display name"""
   displayName: String
+
+  """Display order"""
+  order: Int
 
   """Starting room ID"""
   startId: BigInt
@@ -294,6 +300,9 @@ type Query {
   """
   getInvitesByPartyId(id: BigInt!, type: InviteType!): [Invite]
 
+  """Returns role with `id`"""
+  roleById(id: BigInt!): Role
+
   """Returns room with `id`"""
   roomById(id: BigInt!): Room
 
@@ -386,6 +395,67 @@ type Role {
 
   """ISO date this row was last updated"""
   updatedAt: DateTime!
+}
+
+input RoleCreateInput {
+  admin: Boolean
+
+  """HEX color code associated with the Role"""
+  color: HexColorCode!
+
+  """Display name of the Role"""
+  displayName: String!
+
+  """Global domain CRUD permissions"""
+  domainCrud: [Permission]
+
+  """Global domain Details permissions"""
+  domainDetails: [DetailPermission]
+
+  """User moderation permissions"""
+  modPerms: [ModPermission]
+  owner: Boolean
+
+  """Global room CRUD permissions"""
+  roomCrud: [Permission]
+
+  """Global room Details permissions"""
+  roomDetails: [DetailPermission]
+
+  """Server Details permissions"""
+  serverDetails: [DetailPermission]
+
+  """ID of associated server"""
+  serverId: BigInt!
+}
+
+input RoleUpdateInput {
+  admin: Boolean
+
+  """HEX color code associated with the Role"""
+  color: HexColorCode
+
+  """Display name of the Role"""
+  displayName: String
+
+  """Global domain CRUD permissions"""
+  domainCrud: [Permission]
+
+  """Global domain Details permissions"""
+  domainDetails: [DetailPermission]
+
+  """User moderation permissions"""
+  modPerms: [ModPermission]
+  owner: Boolean
+
+  """Global room CRUD permissions"""
+  roomCrud: [Permission]
+
+  """Global room Details permissions"""
+  roomDetails: [DetailPermission]
+
+  """Server Details permissions"""
+  serverDetails: [DetailPermission]
 }
 
 type Room {

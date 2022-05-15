@@ -16,12 +16,14 @@ export const updateDomain = mutationField("updateDomain", {
     data: nonNull(DomainUpdateInput),
   },
   async resolve(_, args, ctx) {
-    const { displayName, description, thumbnail, startId } = args.data;
-    let data = {
-      displayName: displayName ?? undefined,
+    const { displayName, description, thumbnail, startId, order } = args.data;
+    let data: Prisma.DomainUpdateInput = {
+      displayName: (displayName ??
+        undefined) as Prisma.DomainUpdateInput["displayName"],
       description: description ?? undefined,
       thumbnail: thumbnail ?? undefined,
-      startId: startId ?? undefined,
+      start: startId ? { connect: { id: startId } } : undefined,
+      order: order ?? undefined,
     };
 
     // Fetch domain to check if user is in it's server and can update
@@ -39,16 +41,21 @@ export const updateDomain = mutationField("updateDomain", {
         "You don't have permission to update this domain!"
       );
 
+    // Check if startId is a valid child room
+    if (startId && !domain.rooms.find((r) => r.id === startId))
+      data.start = undefined;
+
     // Omit keys the user does not have permission to update
     data = {
       displayName: uPerms.NAME ? data.displayName : undefined,
       description: uPerms.DESCRIPTION ? data.description : undefined,
       thumbnail: uPerms.THUMBNAIL ? data.thumbnail : undefined,
       // If they have permission to create or delete a room, they can change startId
-      startId:
+      start:
         dPerms.canCreateChild() || dPerms.canDeleteChild()
-          ? data.startId
+          ? data.start
           : undefined,
+      order: dPerms.canDelete() ? data.order : undefined,
     };
     // Update domain
     const update = await ctx.prisma.domain.update({
